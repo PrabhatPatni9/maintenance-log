@@ -73,12 +73,16 @@ function RecordInner() {
   }
 
   async function handleSegmentDone() {
-    // If Web Speech never produced anything, the typed note is standing in
-    // for the transcript (CLAUDE.md section 6) — it needs the same matcher
-    // pass a real transcript gets, or pills the operator clearly typed
-    // (e.g. "oil change kela") would silently never appear.
+    // The Transcript box on screen is directly editable and is what the
+    // operator is actually looking at — once they have typed or corrected
+    // anything in it, that is authoritative. Only fall back to the raw
+    // speech join / the separate typed-note box when they have not touched
+    // the primary field themselves. The previous version always overwrote
+    // `transcript` with this fallback, silently discarding anything typed
+    // straight into the visible box — the operator's own edits never made
+    // it into the saved log, and the matcher never saw them either.
     const joined = segmentTextsRef.current.filter(Boolean).join(' ').trim();
-    const combined = joined || typedNote.trim();
+    const combined = transcript.trim() || joined || typedNote.trim();
     setTranscript(combined);
 
     if (combined) {
