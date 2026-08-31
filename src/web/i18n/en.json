@@ -50,6 +50,8 @@
     "greeting": "Hello, {{name}}"
   },
   "machine": {
+    "pickShedTitle": "Choose a shed",
+    "noSheds": "You don't have access to any shed yet. Ask an admin to grant you one.",
     "pickerTitle": "Choose a machine",
     "searchPlaceholder": "Search machine number",
     "scanQr": "Scan QR",
@@ -124,7 +126,9 @@
       "roleLabel": "Role",
       "roleAdmin": "Admin",
       "roleOperator": "Operator",
-      "initialPasswordLabel": "Initial password"
+      "initialPasswordLabel": "Initial password",
+      "shedAccessLabel": "Shed access",
+      "editShedAccess": "Shed access"
     },
     "taxonomy": {
       "title": "Taxonomy",

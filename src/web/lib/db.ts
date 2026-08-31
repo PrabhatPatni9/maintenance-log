@@ -66,6 +66,14 @@ export interface CachedMachine {
   active: boolean;
 }
 
+/** Only the sheds this operator was granted (or every shed, for an admin) —
+ * mirrors what GET /api/sheds already filtered server side. */
+export interface CachedShed {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface KVRow {
   key: string;
   value: unknown;
@@ -77,6 +85,7 @@ class AppDB extends Dexie {
   outboxItems!: EntityTable<OutboxItem, 'id'>;
   taxonomy!: EntityTable<CachedTaxonomyItem, 'code'>;
   machines!: EntityTable<CachedMachine, 'id'>;
+  sheds!: EntityTable<CachedShed, 'id'>;
   kv!: EntityTable<KVRow, 'key'>;
 
   constructor() {
@@ -87,6 +96,7 @@ class AppDB extends Dexie {
       outboxItems: 'id, logId, [logId+code]',
       taxonomy: 'code, kind, active, sortOrder',
       machines: 'id, shedId, machineNo, active',
+      sheds: 'id, code',
       kv: 'key',
     });
   }

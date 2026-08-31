@@ -6,6 +6,7 @@ import { fetchMachineWithShed } from '../lib/machine-lookup';
 import { mapLog, mapSegment, mapItem, mapEdit } from '../lib/mappers';
 import { transcribeLog } from '../lib/transcribe';
 import { selectProvider } from '../stt/select';
+import { canAccessShed } from '../lib/shed-access';
 import type { Lang, SegmentSource, ItemOrigin } from '@shared/types';
 
 export const logRoutes = new Hono<AppEnv>();
@@ -42,6 +43,12 @@ logRoutes.post('/', async (c) => {
     .first();
 
   if (!existing) {
+    const machine = await fetchMachineWithShed(c.env.DB, body.machineId);
+    if (!machine) return c.json({ error: 'machine not found' }, 404);
+    if (!(await canAccessShed(c.env.DB, session, machine.shedId))) {
+      return c.json({ error: 'forbidden' }, 403);
+    }
+
     const hasTranscript = Boolean(body.transcript && body.transcript.trim());
     const status = body.approved ? 'approved' : hasTranscript ? 'awaiting_review' : 'pending_transcription';
     const now = Date.now();

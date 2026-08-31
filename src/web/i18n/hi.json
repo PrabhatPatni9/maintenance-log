@@ -50,6 +50,8 @@
     "greeting": "नमस्ते, {{name}}"
   },
   "machine": {
+    "pickShedTitle": "शेड चुनें",
+    "noSheds": "अभी आपको किसी शेड का एक्सेस नहीं मिला है। एडमिन से एक्सेस माँगें।",
     "pickerTitle": "मशीन चुनें",
     "searchPlaceholder": "मशीन नंबर खोजें",
     "scanQr": "QR स्कैन करें",
@@ -124,7 +126,9 @@
       "roleLabel": "रोल",
       "roleAdmin": "एडमिन",
       "roleOperator": "ऑपरेटर",
-      "initialPasswordLabel": "शुरुआती पासवर्ड"
+      "initialPasswordLabel": "शुरुआती पासवर्ड",
+      "shedAccessLabel": "शेड एक्सेस",
+      "editShedAccess": "शेड एक्सेस"
     },
     "taxonomy": {
       "title": "टैक्सोनॉमी",

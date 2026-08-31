@@ -3,14 +3,23 @@ import { useNavigate } from '@tanstack/react-router';
 import { useT } from '../i18n';
 import { RequireAuth } from '../lib/guards';
 import { db } from '../lib/db';
-import type { CachedMachine } from '../lib/db';
+import type { CachedMachine, CachedShed } from '../lib/db';
 import { refreshMachines } from '../lib/machines-cache';
 import { startQrScan, type QrScanner } from '../lib/qr';
 
+/**
+ * Two steps: pick the shed (skipped entirely if the operator only has one —
+ * most operators do), then pick the machine from that shed's pre-loaded
+ * list. No QR scan required; it's there as a small fallback link for the
+ * rare admin who wants it, not the primary path (per the product owner:
+ * operators just pick shed, then machine).
+ */
 function MachinePickerInner() {
   const t = useT();
   const navigate = useNavigate();
+  const [sheds, setSheds] = useState<CachedShed[]>([]);
   const [machines, setMachines] = useState<CachedMachine[]>([]);
+  const [selectedShedId, setSelectedShedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState(false);
@@ -18,14 +27,19 @@ function MachinePickerInner() {
   const scannerRef = useRef<QrScanner | null>(null);
 
   useEffect(() => {
-    // Show whatever is cached immediately — this must work offline — then
-    // refresh from the server and re-read once that lands.
-    void db.machines.toArray().then(setMachines);
+    void loadCached();
     void refreshMachines()
-      .then(() => db.machines.toArray())
-      .then(setMachines)
+      .then(loadCached)
       .catch(() => {});
   }, []);
+
+  async function loadCached() {
+    const [s, m] = await Promise.all([db.sheds.toArray(), db.machines.toArray()]);
+    setSheds(s);
+    setMachines(m);
+    // Only one shed to see? Skip the shed-picking step entirely.
+    if (s.length === 1) setSelectedShedId(s[0]!.id);
+  }
 
   useEffect(() => {
     if (!scanning || !videoRef.current) return;
@@ -52,47 +66,68 @@ function MachinePickerInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanning]);
 
-  const grouped = useMemo(() => {
+  const machinesInShed = useMemo(() => {
+    if (!selectedShedId) return [];
     const q = query.trim().toLowerCase();
-    const filtered = q ? machines.filter((m) => m.machineNo.toLowerCase().includes(q)) : machines;
-    const bySheds = new Map<string, CachedMachine[]>();
-    for (const m of filtered) {
-      const list = bySheds.get(m.shedName) ?? [];
-      list.push(m);
-      bySheds.set(m.shedName, list);
-    }
-    return [...bySheds.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [machines, query]);
+    return machines
+      .filter((m) => m.shedId === selectedShedId)
+      .filter((m) => !q || m.machineNo.toLowerCase().includes(q));
+  }, [machines, selectedShedId, query]);
 
+  const selectedShed = sheds.find((s) => s.id === selectedShedId);
+
+  if (scanning) {
+    return (
+      <div style={{ padding: 20, maxWidth: 480, margin: '0 auto' }}>
+        <video ref={videoRef} style={{ width: '100%', background: '#000' }} muted playsInline />
+        <p className="meta" style={{ marginTop: 8 }}>
+          {t('machine.scanQrTitle')}
+        </p>
+        <button className="btn btn-block" style={{ marginTop: 12 }} onClick={() => setScanning(false)}>
+          {t('common.cancel')}
+        </button>
+      </div>
+    );
+  }
+
+  // Step 1: shed picker — only when there's a real choice to make.
+  if (!selectedShedId) {
+    return (
+      <div style={{ padding: 20, maxWidth: 480, margin: '0 auto' }}>
+        <h1 className="screen-title" style={{ marginBottom: 16 }}>
+          {t('machine.pickShedTitle')}
+        </h1>
+        {sheds.length === 0 && <p className="meta">{t('machine.noSheds')}</p>}
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {sheds.map((s) => (
+            <li key={s.id}>
+              <button
+                className="btn btn-block"
+                style={{ minHeight: 64, fontSize: 20, fontWeight: 600 }}
+                onClick={() => setSelectedShedId(s.id)}
+              >
+                {s.code} — {s.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  // Step 2: machine picker within the chosen shed.
   return (
     <div style={{ padding: 20, maxWidth: 480, margin: '0 auto' }}>
-      <h1 className="screen-title" style={{ marginBottom: 16 }}>
-        {t('machine.pickerTitle')}
-      </h1>
-
-      {scanning ? (
-        <div>
-          <video ref={videoRef} style={{ width: '100%', background: '#000' }} muted playsInline />
-          <p className="meta" style={{ marginTop: 8 }}>
-            {t('machine.scanQrTitle')}
-          </p>
-          <button className="btn btn-block" style={{ marginTop: 12 }} onClick={() => setScanning(false)}>
-            {t('common.cancel')}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h1 className="screen-title">
+          {selectedShed ? `${selectedShed.code} — ${selectedShed.name}` : t('machine.pickerTitle')}
+        </h1>
+        {sheds.length > 1 && (
+          <button className="btn" style={{ minHeight: 40 }} onClick={() => setSelectedShedId(null)}>
+            {t('common.back')}
           </button>
-        </div>
-      ) : (
-        <button
-          className="btn btn-primary btn-block"
-          style={{ marginBottom: 16 }}
-          onClick={() => {
-            setScanError(false);
-            setScanning(true);
-          }}
-        >
-          {t('machine.scanQr')}
-        </button>
-      )}
-      {scanError && <p style={{ color: 'var(--fault)', marginBottom: 12 }}>{t('machine.qrNotFound')}</p>}
+        )}
+      </div>
 
       <input
         className="btn btn-block"
@@ -100,28 +135,36 @@ function MachinePickerInner() {
         placeholder={t('machine.searchPlaceholder')}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        autoFocus
       />
 
-      {grouped.length === 0 && <p className="meta">{t('machine.noMachines')}</p>}
+      {machinesInShed.length === 0 && <p className="meta">{t('machine.noMachines')}</p>}
 
-      {grouped.map(([shedName, list]) => (
-        <div key={shedName} style={{ marginBottom: 20 }}>
-          <h2 style={{ fontSize: 15, color: 'var(--steel)', marginBottom: 8 }}>{shedName}</h2>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {list.map((m) => (
-              <li key={m.id}>
-                <button
-                  className="btn"
-                  style={{ minWidth: 64 }}
-                  onClick={() => void navigate({ to: '/record/$machineId', params: { machineId: m.id } })}
-                >
-                  {m.machineNo}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+        {machinesInShed.map((m) => (
+          <li key={m.id}>
+            <button
+              className="btn"
+              style={{ minWidth: 72, minHeight: 56, fontSize: 18 }}
+              onClick={() => void navigate({ to: '/record/$machineId', params: { machineId: m.id } })}
+            >
+              {m.machineNo}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {scanError && <p style={{ color: 'var(--fault)', marginTop: 16 }}>{t('machine.qrNotFound')}</p>}
+      <button
+        className="meta"
+        style={{ background: 'none', border: 'none', marginTop: 24, textDecoration: 'underline', padding: 0 }}
+        onClick={() => {
+          setScanError(false);
+          setScanning(true);
+        }}
+      >
+        {t('machine.scanQr')}
+      </button>
     </div>
   );
 }

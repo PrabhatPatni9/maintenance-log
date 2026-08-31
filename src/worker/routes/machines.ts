@@ -3,19 +3,46 @@ import type { AppEnv } from '../lib/middleware';
 import { requireAdmin, requireAuth } from '../lib/middleware';
 import { mapMachine } from '../lib/mappers';
 import { buildSetClause } from '../lib/sql-update';
+import { accessibleShedIds, canAccessShed } from '../lib/shed-access';
 import { uuidv7 } from '@shared/id';
 
 export const machineRoutes = new Hono<AppEnv>();
 machineRoutes.use('*', requireAuth);
 
+/** Same shed-scoping as GET /api/sheds: an operator only ever sees machines
+ * in a shed they were granted. */
 machineRoutes.get('/', async (c) => {
+  const session = c.get('session');
   const shedId = c.req.query('shedId');
-  const stmt = shedId
-    ? c.env.DB.prepare(
-        'SELECT * FROM machines WHERE shed_id = ? ORDER BY machine_no',
-      ).bind(shedId)
-    : c.env.DB.prepare('SELECT * FROM machines ORDER BY shed_id, machine_no');
-  const { results } = await stmt.all<Record<string, unknown>>();
+
+  if (shedId) {
+    if (!(await canAccessShed(c.env.DB, session, shedId))) {
+      return c.json({ error: 'forbidden' }, 403);
+    }
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM machines WHERE shed_id = ? ORDER BY machine_no',
+    )
+      .bind(shedId)
+      .all<Record<string, unknown>>();
+    return c.json({ machines: results.map(mapMachine) });
+  }
+
+  const allowed = await accessibleShedIds(c.env.DB, session);
+  if (allowed === 'all') {
+    const { results } = await c.env.DB.prepare('SELECT * FROM machines ORDER BY shed_id, machine_no').all<
+      Record<string, unknown>
+    >();
+    return c.json({ machines: results.map(mapMachine) });
+  }
+
+  if (allowed.length === 0) return c.json({ machines: [] });
+
+  const placeholders = allowed.map(() => '?').join(',');
+  const { results } = await c.env.DB.prepare(
+    `SELECT * FROM machines WHERE shed_id IN (${placeholders}) ORDER BY shed_id, machine_no`,
+  )
+    .bind(...allowed)
+    .all<Record<string, unknown>>();
   return c.json({ machines: results.map(mapMachine) });
 });
 

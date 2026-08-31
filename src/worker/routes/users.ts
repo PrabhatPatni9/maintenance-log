@@ -3,6 +3,7 @@ import type { AppEnv } from '../lib/middleware';
 import { requireAdmin, requireAuth } from '../lib/middleware';
 import { hashDerivedKey } from '../lib/auth';
 import { mapUser } from '../lib/mappers';
+import { setUserSheds } from '../lib/shed-access';
 
 export const userRoutes = new Hono<AppEnv>();
 userRoutes.use('*', requireAuth, requireAdmin);
@@ -14,11 +15,22 @@ userRoutes.get('/', async (c) => {
   return c.json({ users: results.map(mapUser) });
 });
 
+userRoutes.get('/:phone/sheds', async (c) => {
+  const phone = c.req.param('phone');
+  const { results } = await c.env.DB.prepare('SELECT shed_id FROM user_sheds WHERE user_phone = ?')
+    .bind(phone)
+    .all<{ shed_id: string }>();
+  return c.json({ shedIds: results.map((r) => r.shed_id) });
+});
+
 /**
  * The admin's browser derives the initial password the same way an
  * operator's does at login (PBKDF2, generateSaltB64 + deriveKeyB64 from
  * src/web/lib/crypto.ts). The server only ever sees `derivedKey`, never the
  * plaintext password, and does the same one SHA-256 it does at login time.
+ *
+ * `shedIds` is which sheds an operator can see at all (CLAUDE.md's access
+ * model). Ignored for admins, who always see every shed.
  */
 userRoutes.post('/', async (c) => {
   const body = await c.req.json<{
@@ -28,6 +40,7 @@ userRoutes.post('/', async (c) => {
     lang: 'en' | 'hi' | 'mr';
     salt: string;
     derivedKey: string;
+    shedIds?: string[];
   }>();
   if (!body.phone || !body.name || !body.role || !body.salt || !body.derivedKey) {
     return c.json({ error: 'missing fields' }, 400);
@@ -44,6 +57,10 @@ userRoutes.post('/', async (c) => {
     .bind(body.phone, body.name, body.role, body.lang, passHash, body.salt, now, session.phone)
     .run();
 
+  if (body.role === 'operator' && body.shedIds?.length) {
+    await setUserSheds(c.env.DB, body.phone, body.shedIds);
+  }
+
   return c.json(
     { user: { phone: body.phone, name: body.name, role: body.role, lang: body.lang, active: true, createdAt: now } },
     201,
@@ -52,7 +69,7 @@ userRoutes.post('/', async (c) => {
 
 userRoutes.patch('/:phone', async (c) => {
   const phone = c.req.param('phone');
-  const body = await c.req.json<{ active?: boolean; name?: string }>();
+  const body = await c.req.json<{ active?: boolean; name?: string; shedIds?: string[] }>();
 
   if (body.active !== undefined) {
     await c.env.DB.prepare('UPDATE users SET active = ? WHERE phone = ?')
@@ -61,6 +78,9 @@ userRoutes.patch('/:phone', async (c) => {
   }
   if (body.name !== undefined) {
     await c.env.DB.prepare('UPDATE users SET name = ? WHERE phone = ?').bind(body.name, phone).run();
+  }
+  if (body.shedIds !== undefined) {
+    await setUserSheds(c.env.DB, phone, body.shedIds);
   }
 
   const row = await c.env.DB.prepare('SELECT * FROM users WHERE phone = ?')

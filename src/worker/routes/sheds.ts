@@ -2,15 +2,33 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
 import { requireAdmin, requireAuth } from '../lib/middleware';
 import { mapShed } from '../lib/mappers';
+import { accessibleShedIds } from '../lib/shed-access';
 import { uuidv7 } from '@shared/id';
 
 export const shedRoutes = new Hono<AppEnv>();
 shedRoutes.use('*', requireAuth);
 
+/** An operator only ever sees the sheds an admin granted them — never the
+ * whole plant. Admins see everything, always. */
 shedRoutes.get('/', async (c) => {
+  const session = c.get('session');
+  const allowed = await accessibleShedIds(c.env.DB, session);
+
+  if (allowed === 'all') {
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM sheds ORDER BY code',
+    ).all<Record<string, unknown>>();
+    return c.json({ sheds: results.map(mapShed) });
+  }
+
+  if (allowed.length === 0) return c.json({ sheds: [] });
+
+  const placeholders = allowed.map(() => '?').join(',');
   const { results } = await c.env.DB.prepare(
-    'SELECT * FROM sheds ORDER BY code',
-  ).all<Record<string, unknown>>();
+    `SELECT * FROM sheds WHERE id IN (${placeholders}) AND active = 1 ORDER BY code`,
+  )
+    .bind(...allowed)
+    .all<Record<string, unknown>>();
   return c.json({ sheds: results.map(mapShed) });
 });
 
