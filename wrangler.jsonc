@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ratanmoti-maintenance",
   "main": "src/worker/index.ts",
-  "compatibility_date": "2026-08-01",
+  "compatibility_date": "2025-07-18",
   "compatibility_flags": ["nodejs_compat"],
 
   // Workers Static Assets. One deploy serves both the API and the PWA,
@@ -27,7 +27,7 @@
     {
       "binding": "DB",
       "database_name": "ratanmoti-maintenance",
-      "database_id": "REPLACE_ME_D1_ID",
+      "database_id": "d0a6a46f-fa92-4ccb-8947-b0861e4e1a88",
       "migrations_dir": "migrations"
     }
   ],
@@ -42,7 +42,7 @@
   "kv_namespaces": [
     {
       "binding": "SESSIONS",
-      "id": "REPLACE_ME_KV_ID"
+      "id": "19cd8e4e70fb41068dc5929a4ce189e5"
     }
   ],
 
