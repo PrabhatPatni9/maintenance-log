@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, claude/project-docs-review-4547vp]
   workflow_dispatch:
 
 concurrency:
@@ -52,7 +52,8 @@ jobs:
 
       # Migrations run before the deploy so the new code never meets an old
       # schema. Migrations must be additive; never drop a column in the same
-      # release that stops writing to it.
+      # release that stops writing to it. Safe to re-run: wrangler tracks
+      # what already applied and skips it.
       - name: Apply D1 migrations
         uses: cloudflare/wrangler-action@v3
         with:
@@ -66,3 +67,44 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+
+      # Worker secrets, pushed from GitHub Action secrets so nobody ever
+      # needs to run `wrangler secret put` by hand. JWT_SECRET is required —
+      # the deploy fails loudly rather than shipping a Worker that can't
+      # sign sessions. The Whisper ones are optional: the app runs fine in
+      # hybrid mode on Web Speech alone until KVM4 is wired up (CLAUDE.md
+      # section 11), so they're only set if actually provided.
+      #
+      # `wrangler-action` only runs the wrangler CLI internally; secrets
+      # still have to be piped in ourselves, which needs wrangler installed
+      # directly rather than through that action.
+      - name: Install wrangler for secret push
+        run: npm install -g wrangler@3
+
+      - name: Set JWT_SECRET
+        run: |
+          if [ -z "$JWT_SECRET" ]; then
+            echo "::error::JWT_SECRET repo secret is not set. Add it under Settings > Secrets and variables > Actions, then re-run this workflow."
+            exit 1
+          fi
+          echo "$JWT_SECRET" | wrangler secret put JWT_SECRET
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set WHISPER_URL
+        if: env.WHISPER_URL != ''
+        run: echo "$WHISPER_URL" | wrangler secret put WHISPER_URL
+        env:
+          WHISPER_URL: ${{ secrets.WHISPER_URL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set WHISPER_TOKEN
+        if: env.WHISPER_TOKEN != ''
+        run: echo "$WHISPER_TOKEN" | wrangler secret put WHISPER_TOKEN
+        env:
+          WHISPER_TOKEN: ${{ secrets.WHISPER_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

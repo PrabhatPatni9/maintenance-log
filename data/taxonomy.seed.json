@@ -1,5 +1,5 @@
 {
-  "_note": "STARTING POINT ONLY. Written from general rapier loom knowledge, not from Ratanmoti's actual shed. Sit with the supervisor and expand this before seeding production. Every synonym list must carry BOTH Devanagari and Latin forms, because Web Speech returns Devanagari for hi-IN and mr-IN but Latin for en-IN. Add the Hinglish forms operators actually say, not the formal translation.",
+  "_note": "Expanded from the original starting point to cover the practical range of rapier loom and weaving shed maintenance vocabulary, written from domain knowledge (not yet reviewed by Ratanmoti's own shed supervisor). Treat this as a strong working set, not gospel: the admin taxonomy screen lets a supervisor add, edit or deactivate entries any time with no deploy. Every synonym list must carry BOTH Devanagari and Latin forms, because Web Speech returns Devanagari for hi-IN and mr-IN but Latin for en-IN. Add the Hinglish forms operators actually say, not the formal translation.",
   "_synonym_rule": "Lowercase, no punctuation. Short distinctive phrases beat long ones. Avoid synonyms that are substrings of other items.",
 
   "actions": [
@@ -20,12 +20,28 @@
       "synonyms": ["oil top up", "oil topup", "oil refill", "तेल भरले", "तेल भरा", "ऑइल टॉप अप", "तेल ॲड"]
     },
     {
+      "code": "OIL_LEAK",
+      "category": "lubrication",
+      "label_en": "Oil leakage",
+      "label_hi": "तेल लीक",
+      "label_mr": "तेल गळती",
+      "synonyms": ["oil leak", "oil leaking", "oil leakage", "तेल लीक", "तेल गळती", "तेल टपकतंय", "ऑइल लीक"]
+    },
+    {
       "code": "GREASING",
       "category": "lubrication",
       "label_en": "Greasing",
       "label_hi": "ग्रीसिंग",
       "label_mr": "ग्रीसिंग",
       "synonyms": ["greasing", "grease", "greased", "grease lagaya", "ग्रीस", "ग्रीसिंग", "ग्रीस लावले", "ग्रीस भरले"]
+    },
+    {
+      "code": "OILING_SCHEDULE",
+      "category": "preventive",
+      "label_en": "Scheduled oiling done",
+      "label_hi": "शेड्यूल ऑइलिंग",
+      "label_mr": "ठराविक ऑइलिंग",
+      "synonyms": ["scheduled oiling", "oiling schedule", "weekly oiling", "शेड्यूल ऑइलिंग", "ठराविक ऑइलिंग", "साप्ताहिक ऑइलिंग"]
     },
     {
       "code": "AIR_LEAKAGE",
@@ -36,12 +52,52 @@
       "synonyms": ["air leakage", "air leak", "hawa leak", "leakage", "हवा लीक", "हवा गळती", "एअर लीक", "लीकेज", "हवा जात होती"]
     },
     {
+      "code": "AIR_PRESSURE_LOW",
+      "category": "pneumatics",
+      "label_en": "Low air pressure",
+      "label_hi": "हवा का दबाव कम",
+      "label_mr": "हवेचा दाब कमी",
+      "synonyms": ["air pressure low", "pressure drop", "low pressure", "हवा प्रेशर कम", "हवेचा दाब कमी", "प्रेशर कमी", "दाब कमी"]
+    },
+    {
       "code": "COMPRESSOR_FAULT",
       "category": "pneumatics",
       "label_en": "Compressor fault",
       "label_hi": "कंप्रेसर खराबी",
       "label_mr": "कंप्रेसर बिघाड",
       "synonyms": ["compressor fault", "compressor problem", "air compressor error", "compressor band", "कंप्रेसर", "कंप्रेसर खराब", "कंप्रेसर बिघाड", "एअर कंप्रेसर"]
+    },
+    {
+      "code": "RECEIVER_DRAIN",
+      "category": "pneumatics",
+      "label_en": "Receiver tank drained",
+      "label_hi": "रिसीवर टैंक ड्रेन",
+      "label_mr": "रिसीव्हर टाकी ड्रेन",
+      "synonyms": ["receiver drain", "tank drain", "receiver tank drain", "रिसीवर ड्रेन", "टाकी ड्रेन", "रिसीव्हर टाकी ड्रेन"]
+    },
+    {
+      "code": "PIPE_LEAK",
+      "category": "pneumatics",
+      "label_en": "Air pipe leak",
+      "label_hi": "पाइप लीक",
+      "label_mr": "पाइप लीक",
+      "synonyms": ["pipe leak", "pipe leaking", "air pipe leak", "पाइप लीक", "नळी लीक", "पाइप गळती"]
+    },
+    {
+      "code": "CYLINDER_FAULT",
+      "category": "pneumatics",
+      "label_en": "Pneumatic cylinder fault",
+      "label_hi": "सिलेंडर खराबी",
+      "label_mr": "सिलिंडर बिघाड",
+      "synonyms": ["cylinder fault", "cylinder problem", "सिलेंडर खराब", "सिलिंडर बिघाड", "सिलेंडर"]
+    },
+    {
+      "code": "SOLENOID_VALVE",
+      "category": "pneumatics",
+      "label_en": "Solenoid valve replaced",
+      "label_hi": "सोलेनॉइड वाल्व",
+      "label_mr": "सोलेनॉइड व्हॉल्व्ह",
+      "synonyms": ["solenoid", "solenoid valve", "valve change", "सोलेनॉइड", "व्हॉल्व्ह बदल", "वाल्व बदल"]
     },
     {
       "code": "FILTER_CLEAN",
@@ -58,6 +114,22 @@
       "label_hi": "ब्लोअर सफाई",
       "label_mr": "ब्लोअर साफ",
       "synonyms": ["blower cleaning", "blower clean", "blower saaf", "ब्लोअर साफ", "ब्लोअर सफाई"]
+    },
+    {
+      "code": "LINT_CLEAN",
+      "category": "cleaning",
+      "label_en": "Lint or fluff cleaned",
+      "label_hi": "लिंट सफाई",
+      "label_mr": "लिंट साफसफाई",
+      "synonyms": ["lint cleaning", "fluff cleaning", "lint clean", "लिंट साफ", "फ्लफ साफ", "कचरा साफ", "धागा कचरा साफ"]
+    },
+    {
+      "code": "SUCTION_CLEAN",
+      "category": "cleaning",
+      "label_en": "Suction system cleaned",
+      "label_hi": "सक्शन सफाई",
+      "label_mr": "सक्शन साफसफाई",
+      "synonyms": ["suction cleaning", "suction clean", "सक्शन साफ", "सक्शन सफाई"]
     },
     {
       "code": "GENERAL_CLEAN",
@@ -100,6 +172,54 @@
       "synonyms": ["weft feeder", "feeder", "feeder cleaning", "वेफ्ट फीडर", "फीडर साफ", "फीडर"]
     },
     {
+      "code": "WEFT_BREAK",
+      "category": "weft_insertion",
+      "label_en": "Weft break attended",
+      "label_hi": "वेफ्ट ब्रेक",
+      "label_mr": "वेफ्ट ब्रेक",
+      "synonyms": ["weft break", "weft breaking", "बाना तुटला", "वेफ्ट ब्रेक", "वेफ्ट तुटला"]
+    },
+    {
+      "code": "PREWINDER_FAULT",
+      "category": "weft_insertion",
+      "label_en": "Prewinder fault",
+      "label_hi": "प्रीवाइंडर खराबी",
+      "label_mr": "प्रीवाइंडर बिघाड",
+      "synonyms": ["prewinder", "prewinder fault", "प्रीवाइंडर", "प्रीवाइंडर खराब", "प्रीवाइंडर बिघाड"]
+    },
+    {
+      "code": "YARN_TENSION_WEFT",
+      "category": "weft_insertion",
+      "label_en": "Weft yarn tension adjusted",
+      "label_hi": "वेफ्ट टेंशन सेटिंग",
+      "label_mr": "वेफ्ट टेंशन सेटिंग",
+      "synonyms": ["weft tension", "tension setting", "yarn tension", "वेफ्ट टेंशन", "टेंशन सेट", "धागा टेंशन"]
+    },
+    {
+      "code": "SELVEDGE_FAULT",
+      "category": "weft_insertion",
+      "label_en": "Selvedge fault",
+      "label_hi": "सेल्वेज खराबी",
+      "label_mr": "सेल्वेज बिघाड",
+      "synonyms": ["selvedge", "selvage", "selvedge fault", "सेल्वेज", "किनार खराब", "काठ खराब"]
+    },
+    {
+      "code": "TUCK_IN_FAULT",
+      "category": "weft_insertion",
+      "label_en": "Tuck-in device fault",
+      "label_hi": "टक इन डिवाइस खराबी",
+      "label_mr": "टक इन डिवाइस बिघाड",
+      "synonyms": ["tuck in", "tuck-in fault", "tuck in device", "टक इन", "टक इन बिघाड"]
+    },
+    {
+      "code": "LEASE_ROD_ADJUST",
+      "category": "weft_insertion",
+      "label_en": "Lease rod adjusted",
+      "label_hi": "लीज़ रॉड सेटिंग",
+      "label_mr": "लीज़ रॉड सेटिंग",
+      "synonyms": ["lease rod", "lease rod adjust", "लीज रॉड", "लीज़ रॉड सेटिंग"]
+    },
+    {
       "code": "CUTTER_BLADE",
       "category": "weft_insertion",
       "label_en": "Cutter blade changed",
@@ -122,6 +242,14 @@
       "label_hi": "हील्ड बदली",
       "label_mr": "हील्ड बदलली",
       "synonyms": ["heald", "healds", "heald wire", "हील्ड", "हेल्ड", "हील्ड बदल", "वायर बदल"]
+    },
+    {
+      "code": "HEALD_FRAME_ADJUST",
+      "category": "weaving",
+      "label_en": "Heald frame adjusted",
+      "label_hi": "हील्ड फ्रेम सेटिंग",
+      "label_mr": "हील्ड फ्रेम सेटिंग",
+      "synonyms": ["heald frame", "frame adjust", "हील्ड फ्रेम", "फ्रेम सेटिंग"]
     },
     {
       "code": "DROPPER_WORK",
@@ -148,6 +276,134 @@
       "synonyms": ["beam change", "warp beam", "beam badla", "बीम बदल", "बीम बदलला", "वार्प बीम", "तानाबीम"]
     },
     {
+      "code": "WARP_BREAK",
+      "category": "weaving",
+      "label_en": "Warp break attended",
+      "label_hi": "वार्प ब्रेक",
+      "label_mr": "वार्प ब्रेक",
+      "synonyms": ["warp break", "warp breaking", "ताना तुटला", "वार्प ब्रेक"]
+    },
+    {
+      "code": "SHED_FORMATION",
+      "category": "weaving",
+      "label_en": "Shed formation fault",
+      "label_hi": "शेड फॉर्मेशन खराबी",
+      "label_mr": "शेड फॉर्मेशन बिघाड",
+      "synonyms": ["shed formation", "shedding fault", "शेड फॉर्मेशन", "शेडिंग बिघाड"]
+    },
+    {
+      "code": "CAM_TIMING",
+      "category": "weaving",
+      "label_en": "Cam timing adjusted",
+      "label_hi": "कैम टाइमिंग",
+      "label_mr": "कॅम टायमिंग",
+      "synonyms": ["cam timing", "कैम टाइमिंग", "कॅम टायमिंग"]
+    },
+    {
+      "code": "SLEY_ADJUST",
+      "category": "weaving",
+      "label_en": "Sley motion adjusted",
+      "label_hi": "स्ले मोशन सेटिंग",
+      "label_mr": "स्ले मोशन सेटिंग",
+      "synonyms": ["sley", "sley adjust", "sley motion", "स्ले", "स्ले सेटिंग"]
+    },
+    {
+      "code": "FABRIC_FAULT",
+      "category": "weaving",
+      "label_en": "Fabric fault noted",
+      "label_hi": "फैब्रिक फॉल्ट",
+      "label_mr": "फॅब्रिक फॉल्ट",
+      "synonyms": ["fabric fault", "cloth fault", "फैब्रिक फॉल्ट", "कापड दोष", "कापड फॉल्ट"]
+    },
+    {
+      "code": "PICK_FINDING",
+      "category": "weaving",
+      "label_en": "Pick finding done",
+      "label_hi": "पिक फाइंडिंग",
+      "label_mr": "पिक फाइंडिंग",
+      "synonyms": ["pick finding", "pick find", "पिक फाइंडिंग", "पिक शोध"]
+    },
+    {
+      "code": "LETOFF_ADJUST",
+      "category": "letoff_takeup",
+      "label_en": "Let-off motion adjusted",
+      "label_hi": "लेट ऑफ सेटिंग",
+      "label_mr": "लेट-ऑफ सेटिंग",
+      "synonyms": ["let off", "letoff", "let-off adjust", "लेट ऑफ", "लेट-ऑफ सेटिंग"]
+    },
+    {
+      "code": "TAKEUP_ADJUST",
+      "category": "letoff_takeup",
+      "label_en": "Take-up motion adjusted",
+      "label_hi": "टेक अप सेटिंग",
+      "label_mr": "टेक-अप सेटिंग",
+      "synonyms": ["take up", "takeup", "take-up adjust", "टेक अप", "टेक-अप सेटिंग"]
+    },
+    {
+      "code": "CLOTH_ROLLER_CHANGE",
+      "category": "letoff_takeup",
+      "label_en": "Cloth roller changed",
+      "label_hi": "क्लॉथ रोलर बदला",
+      "label_mr": "क्लॉथ रोलर बदलला",
+      "synonyms": ["cloth roller", "roller change", "क्लॉथ रोलर", "कापड रोलर बदला"]
+    },
+    {
+      "code": "SIZE_BREAK",
+      "category": "warping_sizing",
+      "label_en": "Sized warp break",
+      "label_hi": "साइज ब्रेक",
+      "label_mr": "साइज ब्रेक",
+      "synonyms": ["size break", "sizing break", "साइज ब्रेक", "साइजिंग ब्रेक"]
+    },
+    {
+      "code": "WARPING_BREAK",
+      "category": "warping_sizing",
+      "label_en": "Warping break",
+      "label_hi": "वार्पिंग ब्रेक",
+      "label_mr": "वार्पिंग ब्रेक",
+      "synonyms": ["warping break", "वार्पिंग ब्रेक"]
+    },
+    {
+      "code": "BEAM_KNOTTING",
+      "category": "warping_sizing",
+      "label_en": "Beam knotting done",
+      "label_hi": "बीम नॉटिंग",
+      "label_mr": "बीम नॉटिंग",
+      "synonyms": ["beam knotting", "knotting", "बीम नॉटिंग", "गाठ मारली"]
+    },
+    {
+      "code": "SIZE_RECIPE_CHECK",
+      "category": "warping_sizing",
+      "label_en": "Size recipe checked",
+      "label_hi": "साइज रेसिपी जांच",
+      "label_mr": "साइज मिश्रण तपासले",
+      "synonyms": ["size recipe", "साइज रेसिपी", "साइज मिश्रण तपासले"]
+    },
+    {
+      "code": "JACQUARD_FAULT",
+      "category": "jacquard_dobby",
+      "label_en": "Jacquard fault",
+      "label_hi": "जेकार्ड खराबी",
+      "label_mr": "जेकार्ड बिघाड",
+      "synonyms": ["jacquard", "jacquard fault", "जेकार्ड", "जेकार्ड बिघाड"]
+    },
+    {
+      "code": "DOBBY_FAULT",
+      "category": "jacquard_dobby",
+      "label_en": "Dobby fault",
+      "label_hi": "डॉबी खराबी",
+      "label_mr": "डॉबी बिघाड",
+      "synonyms": ["dobby", "dobby fault", "डॉबी", "डॉबी बिघाड"]
+    },
+    {
+      "code": "HARNESS_CORD_CHANGE",
+      "category": "jacquard_dobby",
+      "label_en": "Harness cord changed",
+      "label_hi": "हार्नेस कॉर्ड बदला",
+      "label_mr": "हार्नेस दोरी बदली",
+      "synonyms": ["harness cord", "harness cord change", "हार्नेस कॉर्ड", "हार्नेस दोरी बदली"]
+    },
+    {
       "code": "BELT_CHANGE",
       "category": "mechanical",
       "label_en": "Belt replaced",
@@ -162,6 +418,78 @@
       "label_hi": "बेयरिंग बदला",
       "label_mr": "बेअरिंग बदलले",
       "synonyms": ["bearing", "bearing change", "bearing badla", "बेयरिंग", "बेअरिंग", "बेअरिंग बदल"]
+    },
+    {
+      "code": "CHAIN_ADJUST",
+      "category": "mechanical",
+      "label_en": "Chain adjusted",
+      "label_hi": "चेन सेटिंग",
+      "label_mr": "चेन सेटिंग",
+      "synonyms": ["chain adjust", "chain tight", "chain setting", "चेन सेटिंग", "चेन टाइट"]
+    },
+    {
+      "code": "COUPLING_FAULT",
+      "category": "mechanical",
+      "label_en": "Coupling fault",
+      "label_hi": "कपलिंग खराबी",
+      "label_mr": "कपलिंग बिघाड",
+      "synonyms": ["coupling", "coupling fault", "कपलिंग", "कपलिंग खराब"]
+    },
+    {
+      "code": "GEARBOX_NOISE",
+      "category": "mechanical",
+      "label_en": "Gearbox noise checked",
+      "label_hi": "गियरबॉक्स आवाज",
+      "label_mr": "गिअरबॉक्स आवाज",
+      "synonyms": ["gearbox noise", "gearbox problem", "गियरबॉक्स आवाज", "गिअरबॉक्स आवाज"]
+    },
+    {
+      "code": "SHAFT_ALIGNMENT",
+      "category": "mechanical",
+      "label_en": "Shaft alignment corrected",
+      "label_hi": "शाफ्ट एलाइनमेंट",
+      "label_mr": "शाफ्ट अलाइनमेंट",
+      "synonyms": ["shaft alignment", "shaft align", "शाफ्ट एलाइनमेंट", "शाफ्ट सरळ केला"]
+    },
+    {
+      "code": "VIBRATION_CHECK",
+      "category": "mechanical",
+      "label_en": "Vibration checked",
+      "label_hi": "वाइब्रेशन जांच",
+      "label_mr": "कंपन तपासले",
+      "synonyms": ["vibration", "vibration check", "वाइब्रेशन", "कंपन तपासले"]
+    },
+    {
+      "code": "LUBE_LINE_CLOG",
+      "category": "mechanical",
+      "label_en": "Lubrication line unclogged",
+      "label_hi": "लुब्रिकेशन लाइन जाम",
+      "label_mr": "ऑइल लाइन जाम",
+      "synonyms": ["lube line", "lube line clog", "oil line clog", "लुब लाइन जाम", "ऑइल लाइन जाम"]
+    },
+    {
+      "code": "CLUTCH_ADJUST",
+      "category": "mechanical",
+      "label_en": "Clutch adjusted",
+      "label_hi": "क्लच सेटिंग",
+      "label_mr": "क्लच सेटिंग",
+      "synonyms": ["clutch", "clutch adjust", "क्लच", "क्लच सेटिंग"]
+    },
+    {
+      "code": "BRAKE_ADJUST",
+      "category": "mechanical",
+      "label_en": "Brake adjusted",
+      "label_hi": "ब्रेक सेटिंग",
+      "label_mr": "ब्रेक सेटिंग",
+      "synonyms": ["brake adjust", "brake setting", "brake problem", "ब्रेक", "ब्रेक सेटिंग", "ब्रेक ॲडजस्ट"]
+    },
+    {
+      "code": "TIMING_SET",
+      "category": "mechanical",
+      "label_en": "Timing set",
+      "label_hi": "टाइमिंग सेटिंग",
+      "label_mr": "टायमिंग सेटिंग",
+      "synonyms": ["timing set", "timing setting", "timing adjust", "टाइमिंग", "टायमिंग सेटिंग", "टाइमिंग सेट"]
     },
     {
       "code": "MOTOR_REPAIR",
@@ -196,28 +524,108 @@
       "synonyms": ["wiring", "wire change", "loose connection", "वायरिंग", "वायर बदलली", "कनेक्शन ढिले", "कनेक्शन"]
     },
     {
-      "code": "BRAKE_ADJUST",
-      "category": "mechanical",
-      "label_en": "Brake adjusted",
-      "label_hi": "ब्रेक सेटिंग",
-      "label_mr": "ब्रेक सेटिंग",
-      "synonyms": ["brake adjust", "brake setting", "brake problem", "ब्रेक", "ब्रेक सेटिंग", "ब्रेक ॲडजस्ट"]
+      "code": "PANEL_FAULT",
+      "category": "electrical",
+      "label_en": "Control panel fault",
+      "label_hi": "पैनल खराबी",
+      "label_mr": "पॅनल बिघाड",
+      "synonyms": ["panel fault", "control panel", "पैनल खराब", "कंट्रोल पैनल", "पॅनल बिघाड"]
     },
     {
-      "code": "TIMING_SET",
-      "category": "mechanical",
-      "label_en": "Timing set",
-      "label_hi": "टाइमिंग सेटिंग",
-      "label_mr": "टायमिंग सेटिंग",
-      "synonyms": ["timing set", "timing setting", "timing adjust", "टाइमिंग", "टायमिंग सेटिंग", "टाइमिंग सेट"]
+      "code": "ENCODER_FAULT",
+      "category": "electrical",
+      "label_en": "Encoder fault",
+      "label_hi": "एनकोडर खराबी",
+      "label_mr": "एन्कोडर बिघाड",
+      "synonyms": ["encoder", "encoder fault", "एनकोडर", "एन्कोडर खराब"]
     },
     {
-      "code": "SOLENOID_VALVE",
-      "category": "pneumatics",
-      "label_en": "Solenoid valve replaced",
-      "label_hi": "सोलेनॉइड वाल्व",
-      "label_mr": "सोलेनॉइड व्हॉल्व्ह",
-      "synonyms": ["solenoid", "solenoid valve", "valve change", "सोलेनॉइड", "व्हॉल्व्ह बदल", "वाल्व बदल"]
+      "code": "LIMIT_SWITCH",
+      "category": "electrical",
+      "label_en": "Limit switch fault",
+      "label_hi": "लिमिट स्विच खराबी",
+      "label_mr": "लिमिट स्विच बिघाड",
+      "synonyms": ["limit switch", "limit switch fault", "लिमिट स्विच", "लिमिट स्विच खराब"]
+    },
+    {
+      "code": "EARTHING_CHECK",
+      "category": "electrical",
+      "label_en": "Earthing checked",
+      "label_hi": "अर्थिंग जांच",
+      "label_mr": "अर्थिंग तपासले",
+      "synonyms": ["earthing", "earthing check", "अर्थिंग", "अर्थिंग तपासले"]
+    },
+    {
+      "code": "MCB_TRIP",
+      "category": "electrical",
+      "label_en": "MCB tripped",
+      "label_hi": "एमसीबी ट्रिप",
+      "label_mr": "एमसीबी ट्रिप",
+      "synonyms": ["mcb trip", "mcb", "एमसीबी ट्रिप", "एमसीबी उडाला"]
+    },
+    {
+      "code": "CABLE_DAMAGE",
+      "category": "electrical",
+      "label_en": "Cable damage repaired",
+      "label_hi": "केबल डैमेज",
+      "label_mr": "केबल खराब",
+      "synonyms": ["cable damage", "cable repair", "केबल डैमेज", "केबल खराब"]
+    },
+    {
+      "code": "HUMIDIFICATION_FAULT",
+      "category": "humidification",
+      "label_en": "Humidification plant fault",
+      "label_hi": "ह्यूमिडिफिकेशन खराबी",
+      "label_mr": "आर्द्रता प्लांट बिघाड",
+      "synonyms": ["humidification", "humidity plant", "humidification fault", "ह्यूमिडिफिकेशन", "आर्द्रता प्लांट बिघाड"]
+    },
+    {
+      "code": "DUCT_CLEAN",
+      "category": "humidification",
+      "label_en": "Duct cleaned",
+      "label_hi": "डक्ट सफाई",
+      "label_mr": "डक्ट साफसफाई",
+      "synonyms": ["duct clean", "duct cleaning", "डक्ट साफ", "डक्ट सफाई"]
+    },
+    {
+      "code": "SAFETY_GUARD_FIX",
+      "category": "safety",
+      "label_en": "Safety guard fixed",
+      "label_hi": "सेफ्टी गार्ड",
+      "label_mr": "सुरक्षा गार्ड",
+      "synonyms": ["safety guard", "guard fix", "सेफ्टी गार्ड", "सुरक्षा गार्ड लावला"]
+    },
+    {
+      "code": "EMERGENCY_STOP_CHECK",
+      "category": "safety",
+      "label_en": "Emergency stop checked",
+      "label_hi": "इमरजेंसी स्टॉप जांच",
+      "label_mr": "आपत्कालीन स्टॉप तपासला",
+      "synonyms": ["emergency stop", "e-stop", "इमरजेंसी स्टॉप", "आपत्कालीन स्टॉप तपासला"]
+    },
+    {
+      "code": "NOISE_COMPLAINT",
+      "category": "preventive",
+      "label_en": "Abnormal noise attended",
+      "label_hi": "असामान्य आवाज",
+      "label_mr": "विचित्र आवाज",
+      "synonyms": ["abnormal noise", "strange noise", "आवाज की शिकायत", "विचित्र आवाज", "आवाज ऐकू येत होता"]
+    },
+    {
+      "code": "MACHINE_NOT_STARTING",
+      "category": "preventive",
+      "label_en": "Machine not starting",
+      "label_hi": "मशीन स्टार्ट नहीं हो रही",
+      "label_mr": "मशीन सुरू होत नाही",
+      "synonyms": ["machine not starting", "not starting", "मशीन स्टार्ट नहीं", "मशीन सुरू होत नाही"]
+    },
+    {
+      "code": "BREAKDOWN_ATTEND",
+      "category": "preventive",
+      "label_en": "Breakdown attended",
+      "label_hi": "ब्रेकडाउन अटेंड",
+      "label_mr": "ब्रेकडाउन अटेंड",
+      "synonyms": ["breakdown", "breakdown attend", "ब्रेकडाउन", "ब्रेकडाउन अटेंड केला"]
     },
     {
       "code": "ROUTINE_CHECK",
@@ -230,25 +638,47 @@
   ],
 
   "parts": [
-    { "code": "P_GEAR_OIL",     "category": "consumable", "unit": "ltr", "label_en": "Gear oil",        "label_hi": "गियर ऑयल",     "label_mr": "गिअर ऑइल",      "synonyms": ["gear oil", "गियर ऑयल", "गिअर ऑइल"] },
-    { "code": "P_HYD_OIL",      "category": "consumable", "unit": "ltr", "label_en": "Hydraulic oil",   "label_hi": "हाइड्रोलिक ऑयल", "label_mr": "हायड्रॉलिक ऑइल", "synonyms": ["hydraulic oil", "हाइड्रोलिक ऑयल", "हायड्रॉलिक ऑइल"] },
-    { "code": "P_GREASE",       "category": "consumable", "unit": "kg",  "label_en": "Grease",          "label_hi": "ग्रीस",          "label_mr": "ग्रीस",           "synonyms": ["grease", "ग्रीस"] },
-    { "code": "P_BELT",         "category": "mechanical", "unit": "nos", "label_en": "Belt",            "label_hi": "बेल्ट",          "label_mr": "बेल्ट",           "synonyms": ["belt", "बेल्ट", "पट्टा"] },
-    { "code": "P_BEARING",      "category": "mechanical", "unit": "nos", "label_en": "Bearing",         "label_hi": "बेयरिंग",        "label_mr": "बेअरिंग",         "synonyms": ["bearing", "बेयरिंग", "बेअरिंग"] },
-    { "code": "P_RAPIER_TAPE",  "category": "weft",       "unit": "nos", "label_en": "Rapier tape",     "label_hi": "रेपियर टेप",     "label_mr": "रेपियर टेप",      "synonyms": ["rapier tape", "रेपियर टेप", "रॅपियर टेप"] },
-    { "code": "P_GRIPPER",      "category": "weft",       "unit": "nos", "label_en": "Gripper",         "label_hi": "ग्रिपर",         "label_mr": "ग्रिपर",          "synonyms": ["gripper", "ग्रिपर"] },
-    { "code": "P_CUTTER_BLADE", "category": "weft",       "unit": "nos", "label_en": "Cutter blade",    "label_hi": "कटर ब्लेड",      "label_mr": "कटर ब्लेड",       "synonyms": ["cutter blade", "कटर ब्लेड"] },
-    { "code": "P_REED",         "category": "weaving",    "unit": "nos", "label_en": "Reed",            "label_hi": "रीड",            "label_mr": "रीड",             "synonyms": ["reed", "रीड", "फणी"] },
-    { "code": "P_HEALD_WIRE",   "category": "weaving",    "unit": "nos", "label_en": "Heald wire",      "label_hi": "हील्ड वायर",     "label_mr": "हील्ड वायर",      "synonyms": ["heald wire", "हील्ड वायर", "हेल्ड वायर"] },
-    { "code": "P_DROPPER",      "category": "weaving",    "unit": "nos", "label_en": "Dropper",         "label_hi": "ड्रॉपर",         "label_mr": "ड्रॉपर",          "synonyms": ["dropper", "ड्रॉपर"] },
-    { "code": "P_TEMPLE_RING",  "category": "weaving",    "unit": "nos", "label_en": "Temple ring",     "label_hi": "टेंपल रिंग",     "label_mr": "टेंपल रिंग",      "synonyms": ["temple ring", "टेंपल रिंग"] },
-    { "code": "P_FILTER",       "category": "pneumatic",  "unit": "nos", "label_en": "Air filter",      "label_hi": "एयर फिल्टर",     "label_mr": "एअर फिल्टर",      "synonyms": ["air filter", "एयर फिल्टर", "एअर फिल्टर"] },
-    { "code": "P_AIR_PIPE",     "category": "pneumatic",  "unit": "mtr", "label_en": "Air pipe",        "label_hi": "एयर पाइप",       "label_mr": "एअर पाइप",        "synonyms": ["air pipe", "एयर पाइप", "एअर पाइप", "नळी"] },
-    { "code": "P_SOLENOID",     "category": "pneumatic",  "unit": "nos", "label_en": "Solenoid valve",  "label_hi": "सोलेनॉइड वाल्व", "label_mr": "सोलेनॉइड व्हॉल्व्ह", "synonyms": ["solenoid valve", "सोलेनॉइड वाल्व", "सोलेनॉइड व्हॉल्व्ह"] },
-    { "code": "P_SENSOR",       "category": "electrical", "unit": "nos", "label_en": "Sensor",          "label_hi": "सेंसर",          "label_mr": "सेन्सर",          "synonyms": ["sensor", "सेंसर", "सेन्सर"] },
-    { "code": "P_PCB",          "category": "electrical", "unit": "nos", "label_en": "PCB card",        "label_hi": "पीसीबी कार्ड",   "label_mr": "पीसीबी कार्ड",    "synonyms": ["pcb card", "पीसीबी कार्ड", "इलेक्ट्रॉनिक कार्ड"] },
-    { "code": "P_CONTACTOR",    "category": "electrical", "unit": "nos", "label_en": "Contactor",       "label_hi": "कॉन्टैक्टर",     "label_mr": "काँटॅक्टर",       "synonyms": ["contactor", "कॉन्टैक्टर", "काँटॅक्टर"] },
-    { "code": "P_FUSE",         "category": "electrical", "unit": "nos", "label_en": "Fuse",            "label_hi": "फ्यूज",          "label_mr": "फ्यूज",           "synonyms": ["fuse", "फ्यूज"] },
-    { "code": "P_MOTOR",        "category": "electrical", "unit": "nos", "label_en": "Motor",           "label_hi": "मोटर",           "label_mr": "मोटर",            "synonyms": ["motor", "मोटर", "मोटार"] }
+    { "code": "P_GEAR_OIL",         "category": "consumable",  "unit": "ltr", "label_en": "Gear oil",              "label_hi": "गियर ऑयल",          "label_mr": "गिअर ऑइल",           "synonyms": ["gear oil", "गियर ऑयल", "गिअर ऑइल"] },
+    { "code": "P_HYD_OIL",          "category": "consumable",  "unit": "ltr", "label_en": "Hydraulic oil",         "label_hi": "हाइड्रोलिक ऑयल",     "label_mr": "हायड्रॉलिक ऑइल",      "synonyms": ["hydraulic oil", "हाइड्रोलिक ऑयल", "हायड्रॉलिक ऑइल"] },
+    { "code": "P_SPINDLE_OIL",      "category": "consumable",  "unit": "ltr", "label_en": "Spindle oil",           "label_hi": "स्पिंडल ऑयल",        "label_mr": "स्पिंडल ऑइल",         "synonyms": ["spindle oil", "स्पिंडल ऑयल", "स्पिंडल ऑइल"] },
+    { "code": "P_GREASE",           "category": "consumable",  "unit": "kg",  "label_en": "Grease",                "label_hi": "ग्रीस",              "label_mr": "ग्रीस",               "synonyms": ["grease", "ग्रीस"] },
+    { "code": "P_SIZE_CHEMICAL",    "category": "consumable",  "unit": "kg",  "label_en": "Sizing chemical",       "label_hi": "साइजिंग केमिकल",     "label_mr": "साइजिंग केमिकल",      "synonyms": ["sizing chemical", "size chemical", "साइजिंग केमिकल"] },
+    { "code": "P_BELT",             "category": "mechanical",  "unit": "nos", "label_en": "Belt",                  "label_hi": "बेल्ट",              "label_mr": "बेल्ट",               "synonyms": ["belt", "बेल्ट", "पट्टा"] },
+    { "code": "P_BEARING",          "category": "mechanical",  "unit": "nos", "label_en": "Bearing",               "label_hi": "बेयरिंग",            "label_mr": "बेअरिंग",             "synonyms": ["bearing", "बेयरिंग", "बेअरिंग"] },
+    { "code": "P_CHAIN",            "category": "mechanical",  "unit": "nos", "label_en": "Chain",                 "label_hi": "चेन",                "label_mr": "चेन",                 "synonyms": ["chain", "चेन"] },
+    { "code": "P_COUPLING",         "category": "mechanical",  "unit": "nos", "label_en": "Coupling",              "label_hi": "कपलिंग",             "label_mr": "कपलिंग",              "synonyms": ["coupling", "कपलिंग"] },
+    { "code": "P_OIL_SEAL",         "category": "mechanical",  "unit": "nos", "label_en": "Oil seal",              "label_hi": "ऑइल सील",            "label_mr": "ऑइल सील",             "synonyms": ["oil seal", "ऑइल सील"] },
+    { "code": "P_KEY_SHAFT",        "category": "mechanical",  "unit": "nos", "label_en": "Shaft key",             "label_hi": "शाफ्ट की",           "label_mr": "शाफ्ट की",            "synonyms": ["shaft key", "key", "शाफ्ट की"] },
+    { "code": "P_RAPIER_TAPE",      "category": "weft",        "unit": "nos", "label_en": "Rapier tape",           "label_hi": "रेपियर टेप",         "label_mr": "रेपियर टेप",          "synonyms": ["rapier tape", "रेपियर टेप", "रॅपियर टेप"] },
+    { "code": "P_GRIPPER",          "category": "weft",        "unit": "nos", "label_en": "Gripper",               "label_hi": "ग्रिपर",             "label_mr": "ग्रिपर",              "synonyms": ["gripper", "ग्रिपर"] },
+    { "code": "P_CUTTER_BLADE",     "category": "weft",        "unit": "nos", "label_en": "Cutter blade",          "label_hi": "कटर ब्लेड",          "label_mr": "कटर ब्लेड",           "synonyms": ["cutter blade", "कटर ब्लेड"] },
+    { "code": "P_PREWINDER_DISC",   "category": "weft",        "unit": "nos", "label_en": "Prewinder disc",        "label_hi": "प्रीवाइंडर डिस्क",   "label_mr": "प्रीवाइंडर डिस्क",    "synonyms": ["prewinder disc", "प्रीवाइंडर डिस्क"] },
+    { "code": "P_WEFT_FEELER",      "category": "weft",        "unit": "nos", "label_en": "Weft feeler",           "label_hi": "वेफ्ट फीलर",         "label_mr": "वेफ्ट फीलर",          "synonyms": ["weft feeler", "feeler", "वेफ्ट फीलर", "फीलर"] },
+    { "code": "P_REED",             "category": "weaving",     "unit": "nos", "label_en": "Reed",                  "label_hi": "रीड",                "label_mr": "रीड",                 "synonyms": ["reed", "रीड", "फणी"] },
+    { "code": "P_HEALD_WIRE",       "category": "weaving",     "unit": "nos", "label_en": "Heald wire",            "label_hi": "हील्ड वायर",         "label_mr": "हील्ड वायर",          "synonyms": ["heald wire", "हील्ड वायर", "हेल्ड वायर"] },
+    { "code": "P_HEALD_FRAME",      "category": "weaving",     "unit": "nos", "label_en": "Heald frame",           "label_hi": "हील्ड फ्रेम",        "label_mr": "हील्ड फ्रेम",         "synonyms": ["heald frame", "हील्ड फ्रेम"] },
+    { "code": "P_DROPPER",          "category": "weaving",     "unit": "nos", "label_en": "Dropper",               "label_hi": "ड्रॉपर",             "label_mr": "ड्रॉपर",              "synonyms": ["dropper", "ड्रॉपर"] },
+    { "code": "P_TEMPLE_RING",      "category": "weaving",     "unit": "nos", "label_en": "Temple ring",           "label_hi": "टेंपल रिंग",         "label_mr": "टेंपल रिंग",          "synonyms": ["temple ring", "टेंपल रिंग"] },
+    { "code": "P_SELVEDGE_DEVICE",  "category": "weaving",     "unit": "nos", "label_en": "Selvedge device",       "label_hi": "सेल्वेज डिवाइस",     "label_mr": "सेल्वेज डिवाइस",      "synonyms": ["selvedge device", "सेल्वेज डिवाइस"] },
+    { "code": "P_LEASE_ROD",        "category": "weaving",     "unit": "nos", "label_en": "Lease rod",             "label_hi": "लीज़ रॉड",           "label_mr": "लीज़ रॉड",            "synonyms": ["lease rod", "लीज रॉड"] },
+    { "code": "P_SIZE_BEAM",        "category": "warping",     "unit": "nos", "label_en": "Size beam",             "label_hi": "साइज बीम",           "label_mr": "साइज बीम",            "synonyms": ["size beam", "साइज बीम"] },
+    { "code": "P_WARP_BEAM_FLANGE", "category": "warping",     "unit": "nos", "label_en": "Warp beam flange",      "label_hi": "बीम फ्लेंज",         "label_mr": "बीम फ्लेंज",          "synonyms": ["beam flange", "flange", "बीम फ्लेंज", "फ्लेंज"] },
+    { "code": "P_FILTER",           "category": "pneumatic",   "unit": "nos", "label_en": "Air filter",            "label_hi": "एयर फिल्टर",         "label_mr": "एअर फिल्टर",          "synonyms": ["air filter", "एयर फिल्टर", "एअर फिल्टर"] },
+    { "code": "P_AIR_PIPE",         "category": "pneumatic",   "unit": "mtr", "label_en": "Air pipe",              "label_hi": "एयर पाइप",           "label_mr": "एअर पाइप",            "synonyms": ["air pipe", "एयर पाइप", "एअर पाइप", "नळी"] },
+    { "code": "P_SOLENOID",         "category": "pneumatic",   "unit": "nos", "label_en": "Solenoid valve",        "label_hi": "सोलेनॉइड वाल्व",     "label_mr": "सोलेनॉइड व्हॉल्व्ह",  "synonyms": ["solenoid valve", "सोलेनॉइड वाल्व", "सोलेनॉइड व्हॉल्व्ह"] },
+    { "code": "P_CYLINDER",         "category": "pneumatic",   "unit": "nos", "label_en": "Pneumatic cylinder",    "label_hi": "सिलेंडर",            "label_mr": "सिलिंडर",             "synonyms": ["cylinder", "सिलेंडर", "सिलिंडर"] },
+    { "code": "P_REGULATOR",        "category": "pneumatic",   "unit": "nos", "label_en": "Air regulator",         "label_hi": "रेगुलेटर",           "label_mr": "रेग्युलेटर",          "synonyms": ["regulator", "रेगुलेटर", "रेग्युलेटर"] },
+    { "code": "P_FRL_UNIT",         "category": "pneumatic",   "unit": "nos", "label_en": "FRL unit",              "label_hi": "एफआरएल यूनिट",       "label_mr": "एफआरएल युनिट",        "synonyms": ["frl unit", "frl", "एफआरएल"] },
+    { "code": "P_SENSOR",           "category": "electrical",  "unit": "nos", "label_en": "Sensor",                "label_hi": "सेंसर",              "label_mr": "सेन्सर",              "synonyms": ["sensor", "सेंसर", "सेन्सर"] },
+    { "code": "P_ENCODER",          "category": "electrical",  "unit": "nos", "label_en": "Encoder",               "label_hi": "एनकोडर",             "label_mr": "एन्कोडर",             "synonyms": ["encoder", "एनकोडर", "एन्कोडर"] },
+    { "code": "P_LIMIT_SWITCH",     "category": "electrical",  "unit": "nos", "label_en": "Limit switch",          "label_hi": "लिमिट स्विच",        "label_mr": "लिमिट स्विच",         "synonyms": ["limit switch", "लिमिट स्विच"] },
+    { "code": "P_PCB",              "category": "electrical",  "unit": "nos", "label_en": "PCB card",              "label_hi": "पीसीबी कार्ड",       "label_mr": "पीसीबी कार्ड",        "synonyms": ["pcb card", "पीसीबी कार्ड", "इलेक्ट्रॉनिक कार्ड"] },
+    { "code": "P_CONTACTOR",        "category": "electrical",  "unit": "nos", "label_en": "Contactor",             "label_hi": "कॉन्टैक्टर",         "label_mr": "काँटॅक्टर",           "synonyms": ["contactor", "कॉन्टैक्टर", "काँटॅक्टर"] },
+    { "code": "P_MCB",              "category": "electrical",  "unit": "nos", "label_en": "MCB",                   "label_hi": "एमसीबी",             "label_mr": "एमसीबी",              "synonyms": ["mcb", "एमसीबी"] },
+    { "code": "P_FUSE",             "category": "electrical",  "unit": "nos", "label_en": "Fuse",                  "label_hi": "फ्यूज",              "label_mr": "फ्यूज",               "synonyms": ["fuse", "फ्यूज"] },
+    { "code": "P_CABLE",            "category": "electrical",  "unit": "mtr", "label_en": "Cable",                 "label_hi": "केबल",               "label_mr": "केबल",                "synonyms": ["cable", "wire", "केबल", "वायर"] },
+    { "code": "P_PANEL_LIGHT",      "category": "electrical",  "unit": "nos", "label_en": "Panel indicator light", "label_hi": "पैनल लाइट",          "label_mr": "पॅनल लाइट",           "synonyms": ["panel light", "indicator light", "पैनल लाइट", "इंडिकेटर लाइट"] },
+    { "code": "P_MOTOR",            "category": "electrical",  "unit": "nos", "label_en": "Motor",                 "label_hi": "मोटर",               "label_mr": "मोटर",                "synonyms": ["motor", "मोटर", "मोटार"] },
+    { "code": "P_LUBRICANT_NIPPLE", "category": "mechanical",  "unit": "nos", "label_en": "Grease nipple",         "label_hi": "ग्रीस निपल",         "label_mr": "ग्रीस निपल",          "synonyms": ["grease nipple", "nipple", "ग्रीस निपल"] }
   ]
 }
