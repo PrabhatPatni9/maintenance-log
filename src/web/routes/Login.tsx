@@ -44,32 +44,48 @@ export function Login() {
         background: 'var(--base)',
       }}
     >
-      <img src="/icons/icon-128.png" alt="" width={64} height={64} style={{ marginBottom: 24 }} />
-      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 360 }}>
-        <input
-          className="btn btn-block"
-          style={{ textAlign: 'left' }}
-          type="tel"
-          inputMode="tel"
-          placeholder={t('auth.phoneLabel')}
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-        />
-        <input
-          className="btn btn-block"
-          style={{ textAlign: 'left' }}
-          type="password"
-          placeholder={t('auth.passwordLabel')}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        {error && <p style={{ color: 'var(--fault)' }}>{t('auth.loginError')}</p>}
-        <button className="btn btn-amber btn-block" type="submit" disabled={busy}>
-          {busy ? t('auth.loggingIn') : t('auth.loginButton')}
-        </button>
-      </form>
+      <div className="panel" style={{ width: '100%', maxWidth: 360, padding: 32 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
+          <img src="/icons/icon-128.png" alt="" width={56} height={56} style={{ marginBottom: 12 }} />
+          <span className="screen-title" style={{ fontSize: 20 }}>
+            {t('common.appName')}
+          </span>
+        </div>
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label className="field-label" htmlFor="login-phone">
+              {t('auth.phoneLabel')}
+            </label>
+            <input
+              id="login-phone"
+              className="input"
+              type="tel"
+              inputMode="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="login-password">
+              {t('auth.passwordLabel')}
+            </label>
+            <input
+              id="login-password"
+              className="input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && <p style={{ color: 'var(--fault)', fontSize: 15 }}>{t('auth.loginError')}</p>}
+          <button className="btn btn-amber btn-block" type="submit" disabled={busy} style={{ marginTop: 8 }}>
+            {busy ? t('auth.loggingIn') : t('auth.loginButton')}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

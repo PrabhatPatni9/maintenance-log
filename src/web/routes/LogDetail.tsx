@@ -24,7 +24,7 @@ function LogDetailInner() {
   if (!log) return <p className="meta" style={{ padding: 20 }}>{t('common.loading')}</p>;
 
   return (
-    <div style={{ padding: 20, maxWidth: 480, margin: '0 auto' }}>
+    <div className="screen">
       <h1 className="screen-title" style={{ marginBottom: 4 }}>
         {t('logDetail.title')}
       </h1>

@@ -3,6 +3,13 @@ import { useT } from '../../i18n';
 import { api } from '../../lib/api';
 import type { Machine, Shed } from '@shared/types';
 
+function compareMachineNo(a: string, b: string): number {
+  const na = Number(a);
+  const nb = Number(b);
+  if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+  return a.localeCompare(b);
+}
+
 export function Machines() {
   const t = useT();
   const [sheds, setSheds] = useState<Shed[]>([]);
@@ -35,7 +42,10 @@ export function Machines() {
     refresh();
   }
 
-  const shedById = new Map(sheds.map((s) => [s.id, s]));
+  const machinesByShed = sheds.map((s) => ({
+    shed: s,
+    machines: machines.filter((m) => m.shedId === s.id).sort((a, b) => compareMachineNo(a.machineNo, b.machineNo)),
+  }));
 
   return (
     <div>
@@ -49,20 +59,20 @@ export function Machines() {
           {t('admin.machines.bulkHint')}
         </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <select className="btn" value={shedId} onChange={(e) => setShedId(e.target.value)} style={{ minWidth: 140 }}>
+          <select className="input" value={shedId} onChange={(e) => setShedId(e.target.value)} style={{ minWidth: 140, flex: 'none' }}>
             {sheds.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.code} — {s.name}
               </option>
             ))}
           </select>
-          <input className="btn" placeholder="1-56" value={range} onChange={(e) => setRange(e.target.value)} required style={{ width: 120, textAlign: 'left' }} />
+          <input className="input" placeholder="1-56" value={range} onChange={(e) => setRange(e.target.value)} required style={{ width: 120, flex: 'none' }} />
           <input
-            className="btn"
+            className="input"
             placeholder={t('admin.machines.loomTypeLabel')}
             value={loomType}
             onChange={(e) => setLoomType(e.target.value)}
-            style={{ width: 160, textAlign: 'left' }}
+            style={{ width: 160, flex: 'none' }}
           />
           <button className="btn btn-primary" type="submit">
             {t('admin.machines.bulkCreate')}
@@ -71,19 +81,36 @@ export function Machines() {
         </div>
       </form>
 
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {machines.map((m) => (
-          <li key={m.id} className="panel" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>
-              {shedById.get(m.shedId)?.code ?? ''}
-              {m.machineNo}
+      {machinesByShed.map(({ shed, machines: shedMachines }) => (
+        <div key={shed.id} style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: 15, color: 'var(--steel)', marginBottom: 10 }}>
+            {shed.code} — {shed.name}
+            <span className="meta" style={{ marginLeft: 8 }}>
+              {shedMachines.length}
             </span>
-            <button className="btn" style={{ minHeight: 32, padding: '0 8px' }} onClick={() => void toggleActive(m)}>
-              {t(m.active ? 'common.deactivate' : 'common.activate')}
-            </button>
-          </li>
-        ))}
-      </ul>
+          </h2>
+          {shedMachines.length === 0 ? (
+            <p className="meta">{t('machine.noMachines')}</p>
+          ) : (
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {shedMachines.map((m) => (
+                <li
+                  key={m.id}
+                  className="panel"
+                  style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, opacity: m.active ? 1 : 0.5 }}
+                >
+                  <span className="machine-number" style={{ fontSize: 18 }}>
+                    {m.machineNo}
+                  </span>
+                  <button className="btn btn-small" onClick={() => void toggleActive(m)}>
+                    {t(m.active ? 'common.deactivate' : 'common.activate')}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

@@ -20,7 +20,10 @@ machineRoutes.get('/', async (c) => {
       return c.json({ error: 'forbidden' }, 403);
     }
     const { results } = await c.env.DB.prepare(
-      'SELECT * FROM machines WHERE shed_id = ? ORDER BY machine_no',
+      // machine_no is TEXT ("as painted on the loom"), so a plain ORDER BY
+      // sorts lexically and puts "10" before "2". CAST to INTEGER for the
+      // real world (plain digits) and fall back to text as a tie-breaker.
+      'SELECT * FROM machines WHERE shed_id = ? ORDER BY CAST(machine_no AS INTEGER), machine_no',
     )
       .bind(shedId)
       .all<Record<string, unknown>>();
@@ -29,9 +32,9 @@ machineRoutes.get('/', async (c) => {
 
   const allowed = await accessibleShedIds(c.env.DB, session);
   if (allowed === 'all') {
-    const { results } = await c.env.DB.prepare('SELECT * FROM machines ORDER BY shed_id, machine_no').all<
-      Record<string, unknown>
-    >();
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM machines ORDER BY shed_id, CAST(machine_no AS INTEGER), machine_no',
+    ).all<Record<string, unknown>>();
     return c.json({ machines: results.map(mapMachine) });
   }
 
@@ -39,7 +42,7 @@ machineRoutes.get('/', async (c) => {
 
   const placeholders = allowed.map(() => '?').join(',');
   const { results } = await c.env.DB.prepare(
-    `SELECT * FROM machines WHERE shed_id IN (${placeholders}) ORDER BY shed_id, machine_no`,
+    `SELECT * FROM machines WHERE shed_id IN (${placeholders}) ORDER BY shed_id, CAST(machine_no AS INTEGER), machine_no`,
   )
     .bind(...allowed)
     .all<Record<string, unknown>>();

@@ -41,16 +41,16 @@ export function Taxonomy() {
       </h1>
 
       <form onSubmit={add} className="panel" style={{ padding: 16, marginBottom: 24, display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
-        <input className="btn" placeholder={t('admin.taxonomy.codeLabel')} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} required style={{ textAlign: 'left' }} />
-        <select className="btn" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as 'action' | 'part' })}>
+        <input className="input" placeholder={t('admin.taxonomy.codeLabel')} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} required style={{ textAlign: 'left' }} />
+        <select className="input" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as 'action' | 'part' })}>
           <option value="action">{t('admin.taxonomy.kindAction')}</option>
           <option value="part">{t('admin.taxonomy.kindPart')}</option>
         </select>
-        <input className="btn" placeholder={t('admin.taxonomy.categoryLabel')} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required style={{ textAlign: 'left' }} />
-        <input className="btn" placeholder="English label" value={form.labelEn} onChange={(e) => setForm({ ...form, labelEn: e.target.value })} required style={{ textAlign: 'left' }} />
-        <input className="btn" placeholder="हिन्दी" value={form.labelHi} onChange={(e) => setForm({ ...form, labelHi: e.target.value })} required style={{ textAlign: 'left' }} />
-        <input className="btn" placeholder="मराठी" value={form.labelMr} onChange={(e) => setForm({ ...form, labelMr: e.target.value })} required style={{ textAlign: 'left' }} />
-        <input className="btn" placeholder={t('admin.taxonomy.unitLabel')} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} style={{ textAlign: 'left' }} />
+        <input className="input" placeholder={t('admin.taxonomy.categoryLabel')} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required style={{ textAlign: 'left' }} />
+        <input className="input" placeholder="English label" value={form.labelEn} onChange={(e) => setForm({ ...form, labelEn: e.target.value })} required style={{ textAlign: 'left' }} />
+        <input className="input" placeholder="हिन्दी" value={form.labelHi} onChange={(e) => setForm({ ...form, labelHi: e.target.value })} required style={{ textAlign: 'left' }} />
+        <input className="input" placeholder="मराठी" value={form.labelMr} onChange={(e) => setForm({ ...form, labelMr: e.target.value })} required style={{ textAlign: 'left' }} />
+        <input className="input" placeholder={t('admin.taxonomy.unitLabel')} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} style={{ textAlign: 'left' }} />
         <input
           className="btn"
           placeholder={t('admin.taxonomy.synonymsLabel')}

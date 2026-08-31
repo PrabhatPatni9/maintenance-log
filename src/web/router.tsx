@@ -10,17 +10,15 @@ import { Record } from './routes/Record';
 import { LogDetail } from './routes/LogDetail';
 import { Settings } from './routes/Settings';
 
-// Admin screens are never opened by an operator on the shed floor, and the
-// QR sheet in particular pulls in the qrcode library — keep all of it out of
-// the bundle everyone else has to download over patchy 4G (CLAUDE.md
-// "Success is measured by one thing").
+// Admin screens are never opened by an operator on the shed floor — keep all
+// of it out of the bundle everyone else has to download over patchy 4G
+// (CLAUDE.md "Success is measured by one thing").
 const AdminShell = lazyRouteComponent(() => import('./routes/admin/AdminShell'), 'AdminShell');
 const Sheds = lazyRouteComponent(() => import('./routes/admin/Sheds'), 'Sheds');
 const Machines = lazyRouteComponent(() => import('./routes/admin/Machines'), 'Machines');
 const Users = lazyRouteComponent(() => import('./routes/admin/Users'), 'Users');
 const Taxonomy = lazyRouteComponent(() => import('./routes/admin/Taxonomy'), 'Taxonomy');
 const History = lazyRouteComponent(() => import('./routes/admin/History'), 'History');
-const QrSheet = lazyRouteComponent(() => import('./routes/admin/QrSheet'), 'QrSheet');
 
 function RootLayout() {
   const { user } = useAuth();
@@ -59,7 +57,6 @@ const adminMachinesRoute = createRoute({ getParentRoute: () => adminRoute, path:
 const adminUsersRoute = createRoute({ getParentRoute: () => adminRoute, path: '/users', component: Users });
 const adminTaxonomyRoute = createRoute({ getParentRoute: () => adminRoute, path: '/taxonomy', component: Taxonomy });
 const adminHistoryRoute = createRoute({ getParentRoute: () => adminRoute, path: '/history', component: History });
-const adminQrRoute = createRoute({ getParentRoute: () => adminRoute, path: '/qr', component: QrSheet });
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -76,7 +73,6 @@ const routeTree = rootRoute.addChildren([
     adminUsersRoute,
     adminTaxonomyRoute,
     adminHistoryRoute,
-    adminQrRoute,
   ]),
 ]);
 

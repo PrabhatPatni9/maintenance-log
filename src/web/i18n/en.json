@@ -54,11 +54,7 @@
     "noSheds": "You don't have access to any shed yet. Ask an admin to grant you one.",
     "pickerTitle": "Choose a machine",
     "searchPlaceholder": "Search machine number",
-    "scanQr": "Scan QR",
-    "scanQrTitle": "Point at the machine's QR sticker",
-    "scanQrHint": "No sticker? Search below instead.",
-    "noMachines": "No machines found",
-    "qrNotFound": "That QR code does not match a known machine."
+    "noMachines": "No machines found"
   },
   "capture": {
     "wrappingUp": "Finish your sentence",
@@ -154,11 +150,6 @@
       "noResults": "No logs match these filters.",
       "editLog": "Edit log",
       "editReasonRequired": "A reason is required to save this edit."
-    },
-    "qr": {
-      "sheetTitle": "QR sticker sheet",
-      "generateSheet": "Generate sheet",
-      "printHint": "Use your browser's print dialog and choose A4."
     }
   },
   "settings": {

@@ -162,7 +162,7 @@ function RecordInner() {
 
   if (phase === 'segment-review') {
     return (
-      <div style={{ padding: 20, maxWidth: 480, margin: '0 auto' }}>
+      <div className="screen">
         {!lastProducedText && <p className="meta">{t('capture.savedOffline')}</p>}
         <h2 style={{ fontSize: 15, color: 'var(--steel)', margin: '16px 0 8px' }}>{t('segment.transcriptLabel')}</h2>
         <textarea
@@ -200,7 +200,7 @@ function RecordInner() {
   }
 
   return (
-    <div style={{ padding: 20, maxWidth: 480, margin: '0 auto' }}>
+    <div className="screen">
       <h1 className="screen-title" style={{ marginBottom: 4 }}>
         {t('review.title')}
       </h1>

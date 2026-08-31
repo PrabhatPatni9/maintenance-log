@@ -74,7 +74,7 @@ export function History() {
       </h1>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-        <select className="btn" value={shedId} onChange={(e) => setShedId(e.target.value)}>
+        <select className="input" value={shedId} onChange={(e) => setShedId(e.target.value)}>
           <option value="">{t('admin.history.filterShed')}</option>
           {sheds.map((s) => (
             <option key={s.id} value={s.id}>
@@ -82,8 +82,8 @@ export function History() {
             </option>
           ))}
         </select>
-        <input className="btn" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-        <input className="btn" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        <input className="input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+        <input className="input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
         <button
           className="btn btn-primary"
           onClick={() => {

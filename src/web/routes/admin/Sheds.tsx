@@ -34,8 +34,8 @@ export function Sheds() {
       </h1>
 
       <form onSubmit={add} style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-        <input className="btn" placeholder={t('admin.sheds.codeLabel')} value={code} onChange={(e) => setCode(e.target.value)} required style={{ width: 100, textAlign: 'left' }} />
-        <input className="btn" placeholder={t('admin.sheds.nameLabel')} value={name} onChange={(e) => setName(e.target.value)} required style={{ flex: 1, minWidth: 160, textAlign: 'left' }} />
+        <input className="input" placeholder={t('admin.sheds.codeLabel')} value={code} onChange={(e) => setCode(e.target.value)} required style={{ width: 100, textAlign: 'left' }} />
+        <input className="input" placeholder={t('admin.sheds.nameLabel')} value={name} onChange={(e) => setName(e.target.value)} required style={{ flex: 1, minWidth: 160, textAlign: 'left' }} />
         <button className="btn btn-primary" type="submit">
           {t('admin.sheds.addShed')}
         </button>

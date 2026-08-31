@@ -17,7 +17,7 @@ function SettingsInner() {
   const navigate = useNavigate();
 
   return (
-    <div style={{ padding: 20, maxWidth: 480, margin: '0 auto' }}>
+    <div className="screen">
       <h1 className="screen-title" style={{ marginBottom: 20 }}>
         {t('settings.title')}
       </h1>

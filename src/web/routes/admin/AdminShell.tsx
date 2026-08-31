@@ -8,7 +8,6 @@ const TABS: { to: string; key: string }[] = [
   { to: '/admin/users', key: 'admin.usersTab' },
   { to: '/admin/taxonomy', key: 'admin.taxonomyTab' },
   { to: '/admin/history', key: 'admin.historyTab' },
-  { to: '/admin/qr', key: 'admin.qr.sheetTitle' },
 ];
 
 function AdminShellInner() {

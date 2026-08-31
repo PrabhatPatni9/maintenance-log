@@ -138,13 +138,13 @@ export function Users() {
 
       <form onSubmit={add} className="panel" style={{ padding: 16, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input className="btn" placeholder={t('admin.users.phoneLabel')} value={phone} onChange={(e) => setPhone(e.target.value)} required style={{ width: 140, textAlign: 'left' }} />
-          <input className="btn" placeholder={t('admin.users.nameLabel')} value={name} onChange={(e) => setName(e.target.value)} required style={{ width: 160, textAlign: 'left' }} />
-          <select className="btn" value={role} onChange={(e) => setRole(e.target.value as Role)}>
+          <input className="input" placeholder={t('admin.users.phoneLabel')} value={phone} onChange={(e) => setPhone(e.target.value)} required style={{ width: 140, textAlign: 'left' }} />
+          <input className="input" placeholder={t('admin.users.nameLabel')} value={name} onChange={(e) => setName(e.target.value)} required style={{ width: 160, textAlign: 'left' }} />
+          <select className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}>
             <option value="operator">{t('admin.users.roleOperator')}</option>
             <option value="admin">{t('admin.users.roleAdmin')}</option>
           </select>
-          <select className="btn" value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
+          <select className="input" value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
             <option value="hi">{t('lang.hindi')}</option>
             <option value="mr">{t('lang.marathi')}</option>
             <option value="en">{t('lang.english')}</option>

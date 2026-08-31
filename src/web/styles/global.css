@@ -104,11 +104,17 @@ button {
   padding: 0 20px;
   font-weight: 500;
   font-size: 17px;
+  transition: background-color 100ms, transform 100ms;
 }
 
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn:not(:disabled):active {
+  transform: translateY(1px);
+  background: var(--base);
 }
 
 .btn-primary {
@@ -117,14 +123,142 @@ button {
   border-color: var(--ink);
 }
 
+.btn-primary:not(:disabled):active {
+  background: #2a2f31;
+}
+
 .btn-amber {
   background: var(--amber);
   color: var(--ink);
   border-color: var(--amber);
 }
 
+.btn-amber:not(:disabled):active {
+  background: #d99512;
+}
+
 .btn-block {
   width: 100%;
+}
+
+.btn-small {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 15px;
+}
+
+/* Editable fields get their own look, distinct from buttons: an inset
+   hairline instead of a raised block, so the eye can tell "type here" from
+   "press here" at a glance — the two read identically when both share .btn. */
+.input {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 0 16px;
+  font-weight: 400;
+  font-size: 17px;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+select.input {
+  background-image: linear-gradient(45deg, transparent 50%, var(--steel) 50%), linear-gradient(135deg, var(--steel) 50%, transparent 50%);
+  background-position: calc(100% - 20px) center, calc(100% - 15px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 40px;
+}
+
+.field-label {
+  display: block;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--steel);
+  margin-bottom: 6px;
+}
+
+.btn:focus-visible,
+.input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--queue);
+  outline-offset: 2px;
+}
+
+/* Shared page padding/max-width so every screen lines up the same way
+   instead of each route re-declaring its own inline padding. */
+.screen {
+  padding: 20px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.screen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stack-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shed-choice {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.shed-choice-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  background: var(--ink);
+  color: var(--panel);
+  font-size: 15px;
+}
+
+/* Uniform square tiles instead of ragged flex-wrap buttons, so a grid of 24
+   machine numbers reads as a grid, not a paragraph of loose chips. */
+.machine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 10px;
+}
+
+.machine-tile {
+  aspect-ratio: 1;
+  min-height: 64px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 100ms, transform 100ms;
+}
+
+.machine-tile:active {
+  transform: translateY(1px);
+  background: var(--base);
+  border-color: var(--steel);
 }
 
 @media (prefers-reduced-motion: reduce) {

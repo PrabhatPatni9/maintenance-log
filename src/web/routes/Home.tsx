@@ -21,7 +21,7 @@ function HomeInner() {
   }, []);
 
   return (
-    <div style={{ padding: 20, maxWidth: 480, margin: '0 auto' }}>
+    <div className="screen">
       <p className="meta" style={{ marginBottom: 20 }}>
         {t('home.greeting', { name: user?.name ?? '' })}
       </p>
