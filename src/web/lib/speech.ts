@@ -106,8 +106,13 @@ export function startRecognition(
 
     // Anything else (network, not-allowed, service-not-allowed) means the
     // engine is gone. Fall through to the queue path silently. The audio is
-    // already being captured by MediaRecorder, so nothing is lost.
-    if (!producedText) cb.onUnavailable();
+    // already being captured by MediaRecorder, so nothing is lost. Logged to
+    // the console only — never surfaced to the operator (CLAUDE.md section
+    // 6) — so this is diagnosable from devtools without breaking that rule.
+    if (!producedText) {
+      console.warn(`[speech] recognition unavailable, error="${e.error}"`);
+      cb.onUnavailable();
+    }
   };
 
   rec.onend = () => {

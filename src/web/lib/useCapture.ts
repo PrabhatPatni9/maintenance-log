@@ -75,13 +75,24 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     const sttMode = await getSttMode();
     if (sttMode === 'local_only' || !isSupported()) return;
 
-    localInstallRef.current = await tryInstallLocal(lang);
+    // Recognition must start now, unconditionally. `SpeechRecognition.install()`
+    // is a real but genuinely experimental Chromium API (present, but not
+    // reliably functional, on current stable builds) and on some devices its
+    // promise never settles at all. Awaiting it here used to gate the actual
+    // recognition start behind it — one hung install() call and the operator
+    // got a silent recorder that never transcribed anything, on every browser
+    // that shares the same broken install() behaviour. It is optional
+    // metadata (speech.ts: "never depend on this succeeding"), so it must
+    // never block the required path. Fire it in the background instead.
     speechRef.current = startRecognition(lang, {
       onInterim: setInterimText,
       onFinal: setFinalText,
       onUnavailable: () => {
         /* silent fallthrough per CLAUDE.md section 6 — audio keeps recording */
       },
+    });
+    void tryInstallLocal(lang).then((ok) => {
+      localInstallRef.current = ok;
     });
   }, [lang, tick]);
 
