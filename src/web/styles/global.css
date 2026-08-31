@@ -1,0 +1,135 @@
+/* Anek: one variable family across Devanagari and Latin, self hosted via
+   @fontsource so the app renders correctly offline on first paint
+   (DESIGN.md). Weights pulled in below are the ones the type scale uses. */
+@import '@fontsource/anek-latin/400.css';
+@import '@fontsource/anek-latin/500.css';
+@import '@fontsource/anek-latin/600.css';
+@import '@fontsource/anek-latin/700.css';
+@import '@fontsource/anek-devanagari/400.css';
+@import '@fontsource/anek-devanagari/500.css';
+@import '@fontsource/anek-devanagari/600.css';
+@import '@fontsource/anek-devanagari/700.css';
+
+:root {
+  --base: #f4f5f3;
+  --panel: #ffffff;
+  --ink: #16191a;
+  --steel: #5a6570;
+  --line: #d8dbd7;
+  --amber: #f2a81d;
+  --signal: #1f7a4d;
+  --fault: #c43c2e;
+  --queue: #2c6e9b;
+
+  --font: 'Anek Latin', 'Anek Devanagari', system-ui, sans-serif;
+  color-scheme: light;
+}
+
+:lang(hi),
+:lang(mr) {
+  --font: 'Anek Devanagari', 'Anek Latin', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--base);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.screen-title {
+  font-weight: 600;
+  font-size: 24px;
+}
+
+.meta {
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--steel);
+}
+
+.machine-number {
+  font-weight: 700;
+  font-size: 40px;
+  font-variation-settings: 'wdth' 75;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Flat surfaces, hairlines instead of shadows or rounded card grids
+   (DESIGN.md "Design direction"). */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.btn {
+  min-height: 56px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 0 20px;
+  font-weight: 500;
+  font-size: 17px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--panel);
+  border-color: var(--ink);
+}
+
+.btn-amber {
+  background: var(--amber);
+  color: var(--ink);
+  border-color: var(--amber);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "common": {
+    "appName": "रत्नमोती मेंटेनन्स",
+    "loading": "लोड हो रहा है...",
+    "save": "सेव करें",
+    "cancel": "रद्द करें",
+    "confirm": "पक्का करें",
+    "back": "पीछे",
+    "next": "आगे",
+    "done": "हो गया",
+    "add": "जोड़ें",
+    "edit": "बदलें",
+    "delete": "हटाएं",
+    "search": "खोजें",
+    "yes": "हां",
+    "no": "नहीं",
+    "close": "बंद करें",
+    "retry": "फिर कोशिश करें",
+    "required": "जरूरी",
+    "optional": "वैकल्पिक",
+    "activate": "चालू करें",
+    "deactivate": "बंद करें",
+    "active": "चालू",
+    "inactive": "बंद",
+    "offline": "ऑफलाइन",
+    "online": "ऑनलाइन"
+  },
+  "lang": {
+    "title": "अपनी भाषा चुनें",
+    "subtitle": "Choose your language / भाषा निवडा",
+    "english": "English",
+    "hindi": "हिन्दी",
+    "marathi": "मराठी",
+    "hello": "नमस्ते"
+  },
+  "auth": {
+    "phoneLabel": "फोन नंबर",
+    "passwordLabel": "पासवर्ड",
+    "loginButton": "लॉग इन करें",
+    "loggingIn": "लॉग इन हो रहा है...",
+    "loginError": "फोन नंबर या पासवर्ड गलत है।",
+    "logoutButton": "लॉग आउट करें"
+  },
+  "home": {
+    "recordButton": "लॉग रिकॉर्ड करें",
+    "queueLabel": "पेंडिंग",
+    "queueEmpty": "सब भेज दिया गया",
+    "todayLogsTitle": "आज के लॉग",
+    "noLogsToday": "आज अभी तक कोई लॉग नहीं। पहला लॉग रिकॉर्ड करें।",
+    "greeting": "नमस्ते, {{name}}"
+  },
+  "machine": {
+    "pickerTitle": "मशीन चुनें",
+    "searchPlaceholder": "मशीन नंबर खोजें",
+    "scanQr": "QR स्कैन करें",
+    "scanQrTitle": "मशीन के QR स्टिकर पर पॉइंट करें",
+    "scanQrHint": "स्टिकर नहीं है? नीचे खोजें।",
+    "noMachines": "कोई मशीन नहीं मिली",
+    "qrNotFound": "यह QR कोड किसी जानी-पहचानी मशीन से मेल नहीं खाता।"
+  },
+  "capture": {
+    "wrappingUp": "अपना वाक्य पूरा करें",
+    "stopButton": "रोकें",
+    "recording": "रिकॉर्डिंग हो रही है",
+    "permissionNeeded": "लॉग रिकॉर्ड करने के लिए माइक्रोफोन एक्सेस चाहिए।",
+    "savedOffline": "सेव हो गया। नेटवर्क वापस आते ही टेक्स्ट दिखेगा।",
+    "typedNoteLabel": "या टाइप करके नोट लिखें",
+    "typedNotePlaceholder": "क्या किया?",
+    "useTypedNote": "टाइप किया नोट इस्तेमाल करें"
+  },
+  "segment": {
+    "transcriptLabel": "ट्रांसक्रिप्ट",
+    "addMore": "और रिकॉर्ड करें",
+    "doneButton": "हो गया",
+    "addPill": "+ जोड़ें",
+    "searchTaxonomy": "काम और पार्ट्स खोजें",
+    "noPillsDetected": "अभी कुछ नहीं मिला। कुछ छूट गया हो तो + जोड़ें दबाएं।"
+  },
+  "review": {
+    "title": "लॉग रिव्यू करें",
+    "approveButton": "मंज़ूर करें",
+    "approved": "मंज़ूर",
+    "itemsLabel": "काम और पार्ट्स",
+    "machineLabel": "मशीन",
+    "dateLabel": "तारीख"
+  },
+  "logDetail": {
+    "title": "लॉग विवरण",
+    "editedBadge": "बदला गया",
+    "editReason": "कारण",
+    "segmentsLabel": "रिकॉर्डिंग",
+    "audioLabel": "ऑडियो"
+  },
+  "admin": {
+    "shedsTab": "शेड",
+    "machinesTab": "मशीनें",
+    "usersTab": "यूज़र",
+    "taxonomyTab": "टैक्सोनॉमी",
+    "historyTab": "हिस्ट्री",
+    "sheds": {
+      "title": "शेड",
+      "addShed": "शेड जोड़ें",
+      "codeLabel": "कोड",
+      "nameLabel": "नाम"
+    },
+    "machines": {
+      "title": "मशीनें",
+      "addMachine": "मशीन जोड़ें",
+      "bulkCreate": "एक साथ बनाएं",
+      "bulkHint": "एक साथ कई मशीनें बनाने के लिए 1-56 जैसा रेंज डालें",
+      "shedLabel": "शेड",
+      "machineNoLabel": "मशीन नंबर",
+      "makeLabel": "मेक",
+      "modelLabel": "मॉडल",
+      "loomTypeLabel": "लूम टाइप",
+      "shedviewIdLabel": "ShedView ID",
+      "installedOnLabel": "लगाने की तारीख"
+    },
+    "users": {
+      "title": "यूज़र",
+      "addUser": "यूज़र जोड़ें",
+      "nameLabel": "नाम",
+      "phoneLabel": "फोन",
+      "roleLabel": "रोल",
+      "roleAdmin": "एडमिन",
+      "roleOperator": "ऑपरेटर",
+      "initialPasswordLabel": "शुरुआती पासवर्ड"
+    },
+    "taxonomy": {
+      "title": "टैक्सोनॉमी",
+      "addItem": "आइटम जोड़ें",
+      "codeLabel": "कोड",
+      "kindLabel": "प्रकार",
+      "kindAction": "काम",
+      "kindPart": "पार्ट",
+      "categoryLabel": "कैटेगरी",
+      "unitLabel": "यूनिट",
+      "synonymsLabel": "समानार्थी शब्द (दोनों लिपि)",
+      "synonymsHint": "कॉमा से अलग करें। ऑपरेटर जैसा बोलते हैं वैसे, देवनागरी और लैटिन दोनों में लिखें।"
+    },
+    "history": {
+      "title": "हिस्ट्री",
+      "filterShed": "शेड",
+      "filterMachine": "मशीन",
+      "filterOperator": "ऑपरेटर",
+      "filterDateFrom": "से",
+      "filterDateTo": "तक",
+      "filterAction": "काम",
+      "exportCsv": "CSV एक्सपोर्ट करें",
+      "noResults": "इन फ़िल्टर से कोई लॉग नहीं मिला।",
+      "editLog": "लॉग बदलें",
+      "editReasonRequired": "यह बदलाव सेव करने के लिए कारण लिखना जरूरी है।"
+    },
+    "qr": {
+      "sheetTitle": "QR स्टिकर शीट",
+      "generateSheet": "शीट बनाएं",
+      "printHint": "अपने ब्राउज़र के प्रिंट डायलॉग में A4 चुनें।"
+    }
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "languageLabel": "भाषा",
+    "changeLanguage": "भाषा बदलें"
+  },
+  "install": {
+    "promptTitle": "रत्नमोती मेंटेनन्स इंस्टॉल करें",
+    "promptBody": "एक टैप में खोलने के लिए इसे होम स्क्रीन पर जोड़ें।",
+    "installButton": "इंस्टॉल करें",
+    "dismiss": "अभी नहीं",
+    "iosTitle": "होम स्क्रीन पर जोड़ें",
+    "iosStep1": "शेयर बटन दबाएं",
+    "iosStep2": "नीचे स्क्रॉल करके \"Add to Home Screen\" दबाएं",
+    "iosStep3": "Add दबाएं"
+  },
+  "errors": {
+    "networkError": "इंटरनेट नहीं है। आपका लॉग सेव है और अपने आप भेज दिया जाएगा।",
+    "genericError": "कुछ गड़बड़ हो गई। फिर कोशिश करें।",
+    "notFound": "नहीं मिला।",
+    "unauthorized": "कृपया फिर से लॉग इन करें।"
+  }
+}

@@ -1,0 +1,10 @@
+# Copy to .dev.vars for local development (wrangler dev reads it automatically).
+# .dev.vars is gitignored — never commit real secrets.
+
+JWT_SECRET=dev-only-secret-change-me
+
+# Leave WHISPER_URL / WHISPER_TOKEN unset locally. The stub STT provider
+# kicks in automatically (src/worker/stt/stub.ts) — that is correct behaviour
+# for local dev, not something to work around (AGENTS.md).
+# WHISPER_URL=https://stt.ratanmoti.in/transcribe
+# WHISPER_TOKEN=

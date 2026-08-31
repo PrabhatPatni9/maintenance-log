@@ -1,0 +1,181 @@
+{
+  "common": {
+    "appName": "Ratanmoti Maintenance",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "retry": "Retry",
+    "required": "Required",
+    "optional": "Optional",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "active": "Active",
+    "inactive": "Inactive",
+    "offline": "Offline",
+    "online": "Online"
+  },
+  "lang": {
+    "title": "Choose your language",
+    "subtitle": "भाषा निवडा / भाषा चुनें",
+    "english": "English",
+    "hindi": "हिन्दी",
+    "marathi": "मराठी",
+    "hello": "Hello"
+  },
+  "auth": {
+    "phoneLabel": "Phone number",
+    "passwordLabel": "Password",
+    "loginButton": "Log in",
+    "loggingIn": "Logging in...",
+    "loginError": "Wrong phone or password.",
+    "logoutButton": "Log out"
+  },
+  "home": {
+    "recordButton": "Record a log",
+    "queueLabel": "Pending",
+    "queueEmpty": "All sent",
+    "todayLogsTitle": "Today's logs",
+    "noLogsToday": "No logs yet today. Record your first one.",
+    "greeting": "Hello, {{name}}"
+  },
+  "machine": {
+    "pickerTitle": "Choose a machine",
+    "searchPlaceholder": "Search machine number",
+    "scanQr": "Scan QR",
+    "scanQrTitle": "Point at the machine's QR sticker",
+    "scanQrHint": "No sticker? Search below instead.",
+    "noMachines": "No machines found",
+    "qrNotFound": "That QR code does not match a known machine."
+  },
+  "capture": {
+    "wrappingUp": "Finish your sentence",
+    "stopButton": "Stop",
+    "recording": "Recording",
+    "permissionNeeded": "Microphone access is needed to record a log.",
+    "savedOffline": "Saved. Text will appear once you are back in range.",
+    "typedNoteLabel": "Or type your note instead",
+    "typedNotePlaceholder": "What did you do?",
+    "useTypedNote": "Use typed note"
+  },
+  "segment": {
+    "transcriptLabel": "Transcript",
+    "addMore": "Add more",
+    "doneButton": "Done",
+    "addPill": "+ Add",
+    "searchTaxonomy": "Search actions and parts",
+    "noPillsDetected": "Nothing detected yet. Use + Add if something was missed."
+  },
+  "review": {
+    "title": "Review log",
+    "approveButton": "Approve",
+    "approved": "Approved",
+    "itemsLabel": "Actions and parts",
+    "machineLabel": "Machine",
+    "dateLabel": "Date"
+  },
+  "logDetail": {
+    "title": "Log detail",
+    "editedBadge": "Edited",
+    "editReason": "Reason",
+    "segmentsLabel": "Recordings",
+    "audioLabel": "Audio"
+  },
+  "admin": {
+    "shedsTab": "Sheds",
+    "machinesTab": "Machines",
+    "usersTab": "Users",
+    "taxonomyTab": "Taxonomy",
+    "historyTab": "History",
+    "sheds": {
+      "title": "Sheds",
+      "addShed": "Add shed",
+      "codeLabel": "Code",
+      "nameLabel": "Name"
+    },
+    "machines": {
+      "title": "Machines",
+      "addMachine": "Add machine",
+      "bulkCreate": "Bulk create",
+      "bulkHint": "Enter a range like 1-56 to create many machines at once",
+      "shedLabel": "Shed",
+      "machineNoLabel": "Machine number",
+      "makeLabel": "Make",
+      "modelLabel": "Model",
+      "loomTypeLabel": "Loom type",
+      "shedviewIdLabel": "ShedView ID",
+      "installedOnLabel": "Installed on"
+    },
+    "users": {
+      "title": "Users",
+      "addUser": "Add user",
+      "nameLabel": "Name",
+      "phoneLabel": "Phone",
+      "roleLabel": "Role",
+      "roleAdmin": "Admin",
+      "roleOperator": "Operator",
+      "initialPasswordLabel": "Initial password"
+    },
+    "taxonomy": {
+      "title": "Taxonomy",
+      "addItem": "Add item",
+      "codeLabel": "Code",
+      "kindLabel": "Kind",
+      "kindAction": "Action",
+      "kindPart": "Part",
+      "categoryLabel": "Category",
+      "unitLabel": "Unit",
+      "synonymsLabel": "Synonyms (both scripts)",
+      "synonymsHint": "Comma separated. Include how operators actually say it, in Devanagari and Latin."
+    },
+    "history": {
+      "title": "History",
+      "filterShed": "Shed",
+      "filterMachine": "Machine",
+      "filterOperator": "Operator",
+      "filterDateFrom": "From",
+      "filterDateTo": "To",
+      "filterAction": "Action",
+      "exportCsv": "Export CSV",
+      "noResults": "No logs match these filters.",
+      "editLog": "Edit log",
+      "editReasonRequired": "A reason is required to save this edit."
+    },
+    "qr": {
+      "sheetTitle": "QR sticker sheet",
+      "generateSheet": "Generate sheet",
+      "printHint": "Use your browser's print dialog and choose A4."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "languageLabel": "Language",
+    "changeLanguage": "Change language"
+  },
+  "install": {
+    "promptTitle": "Install Ratanmoti Maintenance",
+    "promptBody": "Add this app to your home screen for one tap access.",
+    "installButton": "Install",
+    "dismiss": "Not now",
+    "iosTitle": "Add to Home Screen",
+    "iosStep1": "Tap the Share button",
+    "iosStep2": "Scroll down and tap \"Add to Home Screen\"",
+    "iosStep3": "Tap Add"
+  },
+  "errors": {
+    "networkError": "No internet. Your log is saved and will send automatically.",
+    "genericError": "Something went wrong. Please try again.",
+    "notFound": "Not found.",
+    "unauthorized": "Please log in again."
+  }
+}
