@@ -61,6 +61,12 @@ async function pushLog(log: OutboxLog): Promise<void> {
 
   for (const seg of segments) {
     if (seg.uploaded) continue;
+    // No audio to put in R2 — recognition runs live and owns the mic on its
+    // own. Mark it done rather than asking for an upload URL for nothing.
+    if (!seg.audioBlob || seg.audioBlob.size === 0) {
+      await db.outboxSegments.update(seg.id, { uploaded: 1 });
+      continue;
+    }
 
     const { url, token } = await api.get<{ url: string; key: string; token: string }>(
       `/logs/${log.id}/segments/${seg.seq}/upload-url`,

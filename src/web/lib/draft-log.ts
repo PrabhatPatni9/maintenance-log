@@ -31,8 +31,12 @@ export async function ensureDraftLog(
   });
 }
 
-export function sourceFor(result: SegmentResult, sttModeIsLocalOnly: boolean): SegmentSource {
-  if (sttModeIsLocalOnly || !result.producedText) return 'whisper'; // audio only, server transcribes it
+export function sourceFor(result: SegmentResult, _sttModeIsLocalOnly: boolean): SegmentSource {
+  // 'whisper' would be a promise the app cannot keep: there is no audio blob
+  // to send any more, so nothing would ever transcribe it server side and the
+  // segment would read "waiting for text" forever. When recognition produced
+  // nothing, the operator types it in review, which is exactly 'typed'.
+  if (!result.producedText) return 'typed';
   return result.usedLocalInstall ? 'webspeech_local' : 'webspeech';
 }
 

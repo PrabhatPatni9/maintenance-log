@@ -58,6 +58,7 @@
   },
   "capture": {
     "wrappingUp": "Finish your sentence",
+    "listening": "Listening — start speaking",
     "stopButton": "Stop",
     "recording": "Recording",
     "permissionNeeded": "Microphone access is needed to record a log.",

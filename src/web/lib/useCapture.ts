@@ -12,10 +12,16 @@ export interface SegmentResult {
 }
 
 /**
- * Owns one 45(+5)s recording: MediaRecorder and SpeechRecognition run in
- * parallel from the moment mic permission resolves (CLAUDE.md section 6).
- * Audio is captured unconditionally; recognition is a bonus this hook
- * degrades out of silently.
+ * Owns one recording. Recognition is the product here: the operator watches
+ * their own words appear, and that live transcript is what gets saved.
+ *
+ * Deliberately does NOT open a MediaRecorder alongside it. Chrome's
+ * SpeechRecognition opens and owns the microphone itself — it takes no
+ * MediaStream — and on Android a getUserMedia capture running at the same
+ * time fights it for the device, which shows up as recognition that starts
+ * and then produces nothing. The parallel audio recording only ever existed
+ * to feed server-side Whisper, which is not wired up, so it was costing the
+ * primary path to feed a consumer that does not exist.
  */
 export function useCapture(lang: Lang, onHardStop: () => void) {
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -24,49 +30,33 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
   const [recording, setRecording] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
 
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
   const speechRef = useRef<SpeechHandle | null>(null);
   const startedAtRef = useRef(0);
   const rafRef = useRef<number>(0);
   const localInstallRef = useRef(false);
+  // Authoritative copy. State drives rendering, but stop() reads the ref so a
+  // hard stop firing from a stale animation-frame closure still returns every
+  // word that was recognised.
+  const finalTextRef = useRef('');
+  const onHardStopRef = useRef(onHardStop);
+  onHardStopRef.current = onHardStop;
 
   const tick = useCallback(() => {
     const elapsed = performance.now() - startedAtRef.current;
     setElapsedMs(elapsed);
     if (elapsed >= 50_000) {
-      onHardStop();
+      onHardStopRef.current();
       return;
     }
     rafRef.current = requestAnimationFrame(tick);
-  }, [onHardStop]);
+  }, []);
 
   const start = useCallback(async () => {
     setInterimText('');
     setFinalText('');
     setElapsedMs(0);
     setPermissionDenied(false);
-
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      setPermissionDenied(true);
-      return;
-    }
-    streamRef.current = stream;
-
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : 'audio/webm';
-    const recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 24_000 });
-    chunksRef.current = [];
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
-    };
-    recorder.start();
-    recorderRef.current = recorder;
+    finalTextRef.current = '';
 
     startedAtRef.current = performance.now();
     setRecording(true);
@@ -75,22 +65,20 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     const sttMode = await getSttMode();
     if (sttMode === 'local_only' || !isSupported()) return;
 
-    // Recognition must start now, unconditionally. `SpeechRecognition.install()`
-    // is a real but genuinely experimental Chromium API (present, but not
-    // reliably functional, on current stable builds) and on some devices its
-    // promise never settles at all. Awaiting it here used to gate the actual
-    // recognition start behind it — one hung install() call and the operator
-    // got a silent recorder that never transcribed anything, on every browser
-    // that shares the same broken install() behaviour. It is optional
-    // metadata (speech.ts: "never depend on this succeeding"), so it must
-    // never block the required path. Fire it in the background instead.
     speechRef.current = startRecognition(lang, {
       onInterim: setInterimText,
-      onFinal: setFinalText,
-      onUnavailable: () => {
-        /* silent fallthrough per CLAUDE.md section 6 — audio keeps recording */
+      onFinal: (text) => {
+        finalTextRef.current = text;
+        setFinalText(text);
       },
+      onUnavailable: () => {
+        /* silent fallthrough — the operator can still type it in review */
+      },
+      onPermissionDenied: () => setPermissionDenied(true),
     });
+
+    // Bonus only, and never on the critical path: this promise does not
+    // reliably settle on every build.
     void tryInstallLocal(lang).then((ok) => {
       localInstallRef.current = ok;
     });
@@ -101,29 +89,20 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     const durationMs = performance.now() - startedAtRef.current;
     setRecording(false);
 
-    const recorder = recorderRef.current;
-    const stopped = new Promise<void>((resolve) => {
-      if (!recorder || recorder.state === 'inactive') return resolve();
-      recorder.onstop = () => resolve();
-      recorder.stop();
-    });
-    await stopped;
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-
     const producedText = speechRef.current?.didProduceText() ?? false;
     speechRef.current?.stop();
+    speechRef.current = null;
 
     if (navigator.vibrate) navigator.vibrate(200); // one short vibration on stop, no sound
 
-    const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
     return {
-      blob,
+      blob: new Blob([], { type: 'audio/webm' }),
       durationMs,
-      transcript: finalText.trim(),
+      transcript: finalTextRef.current.trim(),
       producedText,
       usedLocalInstall: localInstallRef.current,
     };
-  }, [finalText]);
+  }, []);
 
   return { elapsedMs, interimText, finalText, recording, permissionDenied, start, stop };
 }

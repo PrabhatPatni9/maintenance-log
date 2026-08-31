@@ -78,8 +78,8 @@ export function PillList({ all, selected, onToggle, onAdd }: Props) {
       {adding && (
         <div className="panel" style={{ padding: 12 }}>
           <input
-            className="btn btn-block"
-            style={{ textAlign: 'left', marginBottom: 8 }}
+            className="input"
+            style={{ marginBottom: 8 }}
             placeholder={t('segment.searchTaxonomy')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}

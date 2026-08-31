@@ -13,7 +13,7 @@ import { uuidv7 } from '@shared/id';
 import { CaptureRing, CAPTURE_INNER_MS } from '../components/CaptureRing';
 import { PillList } from '../components/PillList';
 
-type Phase = 'capture' | 'segment-review' | 'log-review';
+type Phase = 'capture' | 'review';
 
 function RecordInner() {
   const t = useT();
@@ -25,14 +25,18 @@ function RecordInner() {
   const [phase, setPhase] = useState<Phase>('capture');
   const [machine, setMachine] = useState<CachedMachine | null>(null);
   const [taxonomy, setTaxonomy] = useState<CachedTaxonomyItem[]>([]);
+  // One authoritative piece of text for the whole log. Whatever is in here is
+  // what gets saved — spoken, typed, or spoken then corrected. There is no
+  // second hidden field that silently wins over it.
   const [transcript, setTranscript] = useState('');
-  const [typedNote, setTypedNote] = useState('');
   const [items, setItems] = useState<Record<string, 'auto' | 'manual'>>({});
-  const [lastProducedText, setLastProducedText] = useState(true);
 
   const logIdRef = useRef(uuidv7());
   const seqRef = useRef(0);
-  const segmentTextsRef = useRef<string[]>([]);
+  // Codes the operator deliberately removed. The matcher re-runs as they edit
+  // the text, and without this it would keep putting back the pill they just
+  // took off.
+  const dismissedRef = useRef<Set<string>>(new Set());
 
   const capture = useCapture(lang, () => void handleStop());
 
@@ -43,6 +47,26 @@ function RecordInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [machineId]);
 
+  // Re-match whenever the text settles, so typing or correcting a word selects
+  // the right pills instead of only the original speech being considered.
+  useEffect(() => {
+    if (phase !== 'review') return;
+    const text = transcript.trim();
+    if (!text) return;
+    const timer = setTimeout(() => {
+      void matchTranscript(text).then((matches) => {
+        setItems((prev) => {
+          const next = { ...prev };
+          for (const m of matches) {
+            if (!(m.code in next) && !dismissedRef.current.has(m.code)) next[m.code] = 'auto';
+          }
+          return next;
+        });
+      });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [transcript, phase]);
+
   async function handleStop() {
     const result = await capture.stop();
     const sttMode = await getSttMode();
@@ -51,57 +75,24 @@ function RecordInner() {
     await ensureDraftLog(logIdRef.current, machineId, user!.phone, lang);
     await saveSegment(logIdRef.current, seqRef.current, result, source);
     seqRef.current += 1;
-    segmentTextsRef.current.push(result.transcript);
 
-    setLastProducedText(result.producedText);
-    setTranscript(result.transcript);
-
-    if (result.transcript) {
-      const matches = await matchTranscript(result.transcript);
-      setItems((prev) => {
-        const next = { ...prev };
-        for (const m of matches) if (!(m.code in next)) next[m.code] = 'auto';
-        return next;
-      });
-    }
-    setPhase('segment-review');
+    // Append, so "record more" adds to the note instead of replacing it.
+    setTranscript((prev) => [prev.trim(), result.transcript.trim()].filter(Boolean).join(' '));
+    setPhase('review');
   }
 
-  async function handleAddMore() {
+  async function handleRecordMore() {
     setPhase('capture');
     await capture.start();
   }
 
-  async function handleSegmentDone() {
-    // The Transcript box on screen is directly editable and is what the
-    // operator is actually looking at — once they have typed or corrected
-    // anything in it, that is authoritative. Only fall back to the raw
-    // speech join / the separate typed-note box when they have not touched
-    // the primary field themselves. The previous version always overwrote
-    // `transcript` with this fallback, silently discarding anything typed
-    // straight into the visible box — the operator's own edits never made
-    // it into the saved log, and the matcher never saw them either.
-    const joined = segmentTextsRef.current.filter(Boolean).join(' ').trim();
-    const combined = transcript.trim() || joined || typedNote.trim();
-    setTranscript(combined);
-
-    if (combined) {
-      const matches = await matchTranscript(combined);
-      setItems((prev) => {
-        const next = { ...prev };
-        for (const m of matches) if (!(m.code in next)) next[m.code] = 'auto';
-        return next;
-      });
-    }
-    setPhase('log-review');
-  }
-
   async function handleApprove() {
-    await finalizeAndQueue(logIdRef.current, transcript, typedNote, items);
+    await finalizeAndQueue(logIdRef.current, transcript, '', items);
     void navigate({ to: '/' });
   }
 
   function toggle(code: string) {
+    dismissedRef.current.add(code);
     setItems((prev) => {
       const next = { ...prev };
       delete next[code];
@@ -109,10 +100,12 @@ function RecordInner() {
     });
   }
   function add(code: string) {
+    dismissedRef.current.delete(code);
     setItems((prev) => ({ ...prev, [code]: 'manual' }));
   }
 
   if (phase === 'capture') {
+    const liveText = [capture.finalText, capture.interimText].filter(Boolean).join(' ');
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--base)' }}>
         <div style={{ padding: 20, textAlign: 'center' }}>
@@ -148,55 +141,20 @@ function RecordInner() {
                   ? t('capture.wrappingUp')
                   : `0:${String(Math.max(0, 45 - Math.floor(capture.elapsedMs / 1000))).padStart(2, '0')}`}
               </p>
-              <p style={{ maxWidth: 320, textAlign: 'center', minHeight: 72 }}>
+              {/* The live transcript is the thing that makes an operator trust
+                  this app on day one — settled words in ink, the word being
+                  recognised right now in steel. */}
+              <p style={{ maxWidth: 340, textAlign: 'center', minHeight: 96, fontSize: 18, padding: '0 16px' }}>
+                <span>{capture.finalText}</span>{' '}
                 <span style={{ color: 'var(--steel)' }}>{capture.interimText}</span>
-                <span> {capture.finalText}</span>
+                {!liveText && <span className="meta">{t('capture.listening')}</span>}
               </p>
             </>
           )}
         </div>
         <div style={{ padding: 20 }}>
-          <button className="btn btn-block" style={{ minHeight: 56 }} onClick={() => void handleStop()}>
+          <button className="btn btn-primary btn-block" style={{ minHeight: 64, fontSize: 20 }} onClick={() => void handleStop()}>
             {t('capture.stopButton')}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (phase === 'segment-review') {
-    return (
-      <div className="screen">
-        {!lastProducedText && <p className="meta">{t('capture.savedOffline')}</p>}
-        <h2 style={{ fontSize: 15, color: 'var(--steel)', margin: '16px 0 8px' }}>{t('segment.transcriptLabel')}</h2>
-        <textarea
-          className="panel"
-          style={{ width: '100%', minHeight: 100, padding: 12, fontSize: 17 }}
-          value={transcript}
-          onChange={(e) => setTranscript(e.target.value)}
-        />
-        {!lastProducedText && (
-          <div style={{ marginTop: 12 }}>
-            <label className="meta">{t('capture.typedNoteLabel')}</label>
-            <textarea
-              className="panel"
-              style={{ width: '100%', minHeight: 60, padding: 12, fontSize: 17, marginTop: 4 }}
-              placeholder={t('capture.typedNotePlaceholder')}
-              value={typedNote}
-              onChange={(e) => setTypedNote(e.target.value)}
-            />
-          </div>
-        )}
-
-        <h2 style={{ fontSize: 15, color: 'var(--steel)', margin: '20px 0 8px' }}>{t('review.itemsLabel')}</h2>
-        <PillList all={taxonomy} selected={Object.entries(items).map(([code, origin]) => ({ code, origin }))} onToggle={toggle} onAdd={add} />
-
-        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-          <button className="btn btn-block" onClick={() => void handleAddMore()}>
-            {t('segment.addMore')}
-          </button>
-          <button className="btn btn-primary btn-block" onClick={() => void handleSegmentDone()}>
-            {t('segment.doneButton')}
           </button>
         </div>
       </div>
@@ -212,18 +170,25 @@ function RecordInner() {
         {machine ? `${machine.machineNo} · ${machine.shedName}` : ''} · {new Date().toLocaleDateString()}
       </p>
 
-      <h2 style={{ fontSize: 15, color: 'var(--steel)', marginBottom: 8 }}>{t('segment.transcriptLabel')}</h2>
+      <h2 className="field-label">{t('segment.transcriptLabel')}</h2>
       <textarea
-        className="panel"
-        style={{ width: '100%', minHeight: 100, padding: 12, fontSize: 17, marginBottom: 20 }}
+        className="input"
+        style={{ minHeight: 120, padding: 12, marginBottom: 20, lineHeight: 1.5 }}
+        placeholder={t('capture.typedNotePlaceholder')}
         value={transcript}
         onChange={(e) => setTranscript(e.target.value)}
       />
 
-      <h2 style={{ fontSize: 15, color: 'var(--steel)', marginBottom: 8 }}>{t('review.itemsLabel')}</h2>
+      <h2 className="field-label">{t('review.itemsLabel')}</h2>
       <PillList all={taxonomy} selected={Object.entries(items).map(([code, origin]) => ({ code, origin }))} onToggle={toggle} onAdd={add} />
 
-      <button className="btn btn-amber btn-block" style={{ marginTop: 32, minHeight: 64, fontSize: 20 }} onClick={() => void handleApprove()}>
+      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+        <button className="btn btn-block" onClick={() => void handleRecordMore()}>
+          {t('segment.addMore')}
+        </button>
+      </div>
+
+      <button className="btn btn-amber btn-block" style={{ marginTop: 16, minHeight: 64, fontSize: 20 }} onClick={() => void handleApprove()}>
         {t('review.approveButton')}
       </button>
     </div>
