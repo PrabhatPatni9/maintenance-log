@@ -1,0 +1,68 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ratanmoti-maintenance",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Workers Static Assets. One deploy serves both the API and the PWA,
+  // so there is no Pages plus Worker split and one custom domain covers it.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  // Sweeper for logs stuck in pending_transcription.
+  // Cloudflare Queues needs a paid plan, so this is the retry mechanism.
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ratanmoti-maintenance",
+      "database_id": "REPLACE_ME_D1_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "AUDIO",
+      "bucket_name": "ratanmoti-maintenance-audio"
+    }
+  ],
+
+  "kv_namespaces": [
+    {
+      "binding": "SESSIONS",
+      "id": "REPLACE_ME_KV_ID"
+    }
+  ],
+
+  "vars": {
+    "STT_PROVIDER": "whisper",
+    "STT_MODE": "hybrid",
+    "AUDIO_RETENTION_DAYS": "730",
+    "APP_TIMEZONE": "Asia/Kolkata"
+  },
+
+  // Secrets are NOT set here. Use `wrangler secret put`:
+  //   JWT_SECRET
+  //   WHISPER_URL     self hosted faster-whisper on KVM4, via the tunnel
+  //   WHISPER_TOKEN   bearer token for that endpoint
+  // There is no third party AI key, because there is no third party AI.
+
+  "routes": [
+    {
+      "pattern": "maintenance.ratanmoti.in",
+      "custom_domain": true
+    }
+  ]
+}
