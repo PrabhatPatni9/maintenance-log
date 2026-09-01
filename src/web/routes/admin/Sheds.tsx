@@ -93,7 +93,7 @@ export function Sheds() {
         <form onSubmit={add} className="panel form-row" style={{ padding: 16, marginBottom: 24 }}>
           <div style={{ width: 110 }}>
             <label className="field-label">{t('admin.sheds.codeLabel')}</label>
-            <input className="input" value={code} onChange={(e) => setCode(e.target.value)} required maxLength={4} />
+            <input className="input" value={code} onChange={(e) => setCode(e.target.value)} required maxLength={6} />
           </div>
           <div style={{ flex: 1, minWidth: 160 }}>
             <label className="field-label">{t('admin.sheds.nameLabel')}</label>
@@ -152,7 +152,7 @@ export function Sheds() {
                 value={editCode}
                 onChange={(e) => setEditCode(e.target.value)}
                 required
-                maxLength={4}
+                maxLength={6}
               />
               <label className="field-label">{t('admin.sheds.nameLabel')}</label>
               <input
