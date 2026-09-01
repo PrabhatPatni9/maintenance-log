@@ -5,19 +5,23 @@
  * specific, documented way this API misbehaves on the phones this app
  * actually runs on. Read the comments before changing anything.
  *
- * `continuous = true`, with a restart-on-`onend` loop running underneath it
- * regardless. Chrome plays an audible chime every time a recognition session
- * starts — that is a deliberate, non-suppressible browser privacy signal (it
- * exists so a page cannot silently listen), not a bug, and no web API turns
- * it off. `continuous = false` forces a new session after essentially every
- * phrase, which chimes on every restart — audibly, every couple of seconds,
- * for the whole recording. `continuous = true` is what actually asks the
- * browser for one long session, so on any device where it behaves (which is
- * most of them; crbug 40324711 was specific builds cutting it short after a
- * couple of seconds) capture runs the whole 45–50s on one chime instead of
- * a dozen. The onend-triggered restart loop stays exactly as it was, so a
- * device that still cuts continuous mode short falls back to the same
- * frequent-restart behaviour as before rather than going silent.
+ * `continuous = false` is deliberate — do not "fix" it back to true. It was
+ * tried, on the theory that one long session would chime less often than
+ * restarting every phrase. On a real device it came back worse: Android
+ * re-fired already-finalised results as new ones under continuous mode, and
+ * because the Web Speech spec's own `resultIndex` field is what is supposed
+ * to say "everything before this index you have already seen", a broken
+ * resultIndex meant the same sentence got appended to the transcript over
+ * and over — visibly, in production, as a wall of repeated text. That is a
+ * corrupted log, which is a strictly worse failure than an audible chime.
+ * `continuous = false` plus the restart-on-`onend` loop below is the
+ * verified-safe configuration; it also has an audible-chime cost (Chrome's
+ * start-of-listening chime, which no web API can silence — a deliberate
+ * anti-covert-listening signal, not a bug) but never corrupts the text.
+ *
+ * The onresult handler additionally never trusts `resultIndex` alone — see
+ * `consumedResults` below — as a second, independent guard against exactly
+ * this class of bug on whatever device turns out to be broken next.
  */
 
 export type Lang = 'en' | 'hi' | 'mr';
@@ -102,11 +106,20 @@ export function startRecognition(
   let restartTimer: ReturnType<typeof setTimeout> | null = null;
 
   function buildSession(): any {
+    // Highest index into this session's own e.results this handler has
+    // already turned into text. `e.resultIndex` is supposed to mean the same
+    // thing, coming from the browser — but a broken resultIndex (observed:
+    // stuck at 0 while e.results kept growing) is exactly what re-fed
+    // already-finalised results back in as "new" ones and duplicated the
+    // transcript. Tracking our own high-water mark means a result can only
+    // ever be turned into text once, regardless of what the event claims.
+    let consumedResults = 0;
+
     const r = new (Ctor as any)();
     r.lang = BCP47[lang];
-    // See the file header: one long session where the device allows it,
-    // fewer chimes than restarting after every phrase.
-    r.continuous = true;
+    // See the file header. Verified-safe on real Android hardware; do not
+    // change without re-verifying on-device, not just in the mock tests.
+    r.continuous = false;
     r.interimResults = true;
     r.maxAlternatives = 1;
 
@@ -120,12 +133,14 @@ export function startRecognition(
       // language switch. Once stopped, a session is not allowed to speak.
       if (stopped) return;
       failures = 0;
+      const startAt = Math.max(e.resultIndex, consumedResults);
       let interim = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      for (let i = startAt; i < e.results.length; i++) {
         const chunk = e.results[i][0].transcript;
         if (e.results[i].isFinal) {
           finalText += chunk + ' ';
           producedText = true;
+          consumedResults = i + 1;
           cb.onFinal(finalText.trim());
         } else {
           interim += chunk;

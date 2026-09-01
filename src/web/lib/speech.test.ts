@@ -101,15 +101,44 @@ function cbs() {
 }
 
 describe('startRecognition on Android-style single-shot recognition', () => {
-  it('asks for one continuous session, not a fresh one per phrase', () => {
-    // continuous=false forces a new session (and Chrome's non-suppressible
-    // start chime) after almost every phrase. continuous=true asks for the
-    // long session that avoids that on any device where it actually works;
-    // the restart loop below is what covers the devices where it does not.
+  it('stays in single-shot mode, verified-safe on real Android hardware', () => {
+    // continuous=true was tried to reduce Chrome's start-of-listening chime
+    // (one long session, one chime, instead of a fresh chime per restart).
+    // On a real device it re-fired already-finalised results as new ones and
+    // duplicated the transcript into a wall of repeated text -- worse than
+    // the chime by a wide margin. Do not flip this back without on-device
+    // verification, not just these mocks.
     const c = cbs();
     startRecognition('en', c.handlers);
-    expect(MockSpeechRecognition.instances[0]!.continuous).toBe(true);
+    expect(MockSpeechRecognition.instances[0]!.continuous).toBe(false);
     expect(MockSpeechRecognition.instances[0]!.interimResults).toBe(true);
+  });
+
+  it('never re-finalises a result it has already consumed, even if resultIndex does not advance', () => {
+    // The actual bug that shipped under continuous=true: some Android builds
+    // keep e.resultIndex at 0 while e.results keeps growing, so the same
+    // already-finalised entry gets treated as new again and again -- the
+    // transcript grows by repeating itself instead of by new words. Our own
+    // high-water mark (consumedResults in speech.ts) is what protects
+    // against this independently of whatever the browser's resultIndex says,
+    // so it stays as a hardening measure even with continuous=false.
+    const c = cbs();
+    startRecognition('en', c.handlers);
+    const first = MockSpeechRecognition.instances[0]!;
+    const finalResult = (transcript: string) => Object.assign([{ transcript }], { isFinal: true });
+
+    first.onresult?.({
+      resultIndex: 0,
+      results: Object.assign([finalResult('oil change kiya')], { length: 1 }),
+    });
+    // Second event: resultIndex is still 0 (the bug), but a genuinely new
+    // result has been appended at index 1. The array replays index 0.
+    first.onresult?.({
+      resultIndex: 0,
+      results: Object.assign([finalResult('oil change kiya'), finalResult('belt bhi badla')], { length: 2 }),
+    });
+
+    expect(c.finals).toEqual(['oil change kiya', 'oil change kiya belt bhi badla']);
   });
 
   it('restarts after each session so a long note keeps transcribing', () => {
