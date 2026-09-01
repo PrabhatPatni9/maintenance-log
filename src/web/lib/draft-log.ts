@@ -32,10 +32,21 @@ export async function ensureDraftLog(
 }
 
 export function sourceFor(result: SegmentResult, _sttModeIsLocalOnly: boolean): SegmentSource {
-  // 'whisper' would be a promise the app cannot keep: there is no audio blob
-  // to send any more, so nothing would ever transcribe it server side and the
-  // segment would read "waiting for text" forever. When recognition produced
-  // nothing, the operator types it in review, which is exactly 'typed'.
+  // Real audio is always attached now (useCapture.ts), so 'typed' here does
+  // not mean "no audio was kept" — it means no live transcript came back
+  // for this segment, and whatever text the log ends up with came from the
+  // operator typing in review instead. The blob still uploads to R2
+  // regardless of this label (queue.ts only skips an upload for a
+  // genuinely empty blob), so nothing here is lost even when this returns
+  // 'typed'.
+  //
+  // Server-side Whisper re-transcription (CLAUDE.md section 11) is not
+  // wired to run on these segments: a log only reaches
+  // 'pending_transcription' when it arrives un-approved, and
+  // finalizeAndQueue() always sends approved:true because the operator
+  // already tapped Approve locally before this ever syncs. That is a real,
+  // separate gap from the missing-audio bug this function's comment used to
+  // describe — flagged, not fixed here.
   if (!result.producedText) return 'typed';
   return result.usedLocalInstall ? 'webspeech_local' : 'webspeech';
 }

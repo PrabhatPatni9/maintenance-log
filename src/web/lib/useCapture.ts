@@ -12,6 +12,22 @@ const WARN_AT_MS = 40_000;
  * still held by the one winding down. */
 const LANG_SWITCH_DELAY_MS = 250;
 
+/** In rough preference order — Opus at a low bitrate is what CLAUDE.md
+ * section 6 asks for (small files, cheap R2 storage), but not every Android
+ * build's MediaRecorder supports every container, so the first one the
+ * browser actually accepts wins. */
+const AUDIO_MIME_CANDIDATES = [
+  'audio/webm;codecs=opus',
+  'audio/webm',
+  'audio/ogg;codecs=opus',
+  'audio/mp4',
+];
+
+export function pickAudioMimeType(): string | undefined {
+  if (typeof MediaRecorder === 'undefined') return undefined;
+  return AUDIO_MIME_CANDIDATES.find((t) => MediaRecorder.isTypeSupported(t));
+}
+
 export interface SegmentResult {
   blob: Blob;
   durationMs: number;
@@ -22,15 +38,27 @@ export interface SegmentResult {
 
 /**
  * Owns one recording. Recognition is the product here: the operator watches
- * their own words appear, and that live transcript is what gets saved.
+ * their own words appear, and that live transcript is what gets saved. But
+ * the audio itself is the non-negotiable (CLAUDE.md section 1: "Audio lands
+ * in IndexedDB before anything is sent anywhere") — real bytes, not just a
+ * live transcript, are what makes "no log is ever lost" true when Web
+ * Speech has nothing to say.
  *
- * Deliberately does NOT open a MediaRecorder alongside it. Chrome's
- * SpeechRecognition opens and owns the microphone itself — it takes no
- * MediaStream — and on Android a getUserMedia capture running at the same
- * time fights it for the device, which shows up as recognition that starts
- * and then produces nothing. The parallel audio recording only ever existed
- * to feed server-side Whisper, which is not wired up, so it was costing the
- * primary path to feed a consumer that does not exist.
+ * MediaRecorder and SpeechRecognition both start together, per CLAUDE.md
+ * section 6. A getUserMedia stream feeding MediaRecorder and
+ * SpeechRecognition's own internal mic capture are two independent
+ * consumers of the same hardware; on some Android builds that contention can
+ * mean recognition produces nothing while the two race for the device. That
+ * is an acceptable, already-designed-for degradation — CLAUDE.md's own
+ * fallback is "audio is already captured, offer the typed note box" — it is
+ * NOT acceptable for the trade to go the other way and silently drop the
+ * audio, which is what happened here before: a previous pass deleted
+ * MediaRecorder entirely to "fix" the contention, which fixed nothing and
+ * meant every segment saved an empty, zero-byte blob. No audio ever reached
+ * R2, and the server-side Whisper fallback (CLAUDE.md section 11) had
+ * nothing to transcribe. Restoring real capture is the actual fix; a
+ * device where live transcript loses the mic race still gets its audio
+ * saved, which is the one thing that must never fail.
  */
 export function useCapture(lang: Lang, onHardStop: () => void) {
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -58,6 +86,11 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
   // Stop, arriving before the delay elapses) from writing state that no
   // longer belongs to the current recording.
   const epochRef = useRef(0);
+
+  const streamRef = useRef<MediaStream | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const recorderMimeRef = useRef<string>('audio/webm');
 
   const tick = useCallback(() => {
     const elapsed = performance.now() - startedAtRef.current;
@@ -88,7 +121,8 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
           setFinalText(text);
         },
         onUnavailable: () => {
-          /* silent fallthrough — the operator can still type it in review */
+          /* silent fallthrough — the operator can still type it in review,
+             and the real audio (see below) is already safe either way */
         },
         onPermissionDenied: () => {
           if (epochRef.current !== epoch) return;
@@ -105,6 +139,76 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     });
   }, []);
 
+  /** Opens the mic once per segment and starts recording real audio into
+   * memory. Failure here (denied, no mic, unsupported) is silent — Web
+   * Speech may still work on its own internal capture, and if neither
+   * works the operator falls through to typing, exactly as CLAUDE.md
+   * already designs for. */
+  const startAudioCapture = useCallback(async () => {
+    chunksRef.current = [];
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return;
+
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      // NotAllowedError, NotFoundError, or a mic already fully claimed by
+      // something else — Web Speech's own request gets an independent shot
+      // right after this, and if that also fails its onPermissionDenied
+      // covers telling the operator.
+      return;
+    }
+    streamRef.current = stream;
+
+    const mimeType = pickAudioMimeType();
+    recorderMimeRef.current = mimeType ?? 'audio/webm';
+    try {
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 24_000 })
+        : new MediaRecorder(stream);
+      recorder.ondataavailable = (e: BlobEvent) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorderRef.current = recorder;
+      // 1s timeslices: dataavailable fires periodically instead of only at
+      // stop(), so a crash or a tab kill mid-segment still leaves whatever
+      // was captured so far sitting in chunksRef rather than nothing at all.
+      recorder.start(1000);
+    } catch {
+      // Recorder construction can throw for an unsupported mimeType on some
+      // builds even after isTypeSupported() said yes. Release the stream —
+      // nothing is going to record on it — and let Web Speech carry the
+      // segment on its own.
+      stream.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  }, []);
+
+  const stopAudioCapture = useCallback((): Promise<Blob> => {
+    const recorder = recorderRef.current;
+    const stream = streamRef.current;
+    recorderRef.current = null;
+    streamRef.current = null;
+
+    if (!recorder || recorder.state === 'inactive') {
+      stream?.getTracks().forEach((t) => t.stop());
+      return Promise.resolve(new Blob(chunksRef.current, { type: recorderMimeRef.current }));
+    }
+
+    return new Promise<Blob>((resolve) => {
+      recorder.onstop = () => {
+        stream?.getTracks().forEach((t) => t.stop());
+        resolve(new Blob(chunksRef.current, { type: recorderMimeRef.current }));
+      };
+      try {
+        recorder.stop();
+      } catch {
+        stream?.getTracks().forEach((t) => t.stop());
+        resolve(new Blob(chunksRef.current, { type: recorderMimeRef.current }));
+      }
+    });
+  }, []);
+
   const start = useCallback(async () => {
     setInterimText('');
     setFinalText('');
@@ -118,12 +222,14 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     pingStart();
     rafRef.current = requestAnimationFrame(tick);
 
+    void startAudioCapture();
+
     const sttMode = await getSttMode();
     if (sttMode === 'local_only' || !isSupported()) return;
 
     const epoch = ++epochRef.current;
     launchRecognition(lang, '', epoch);
-  }, [lang, tick, launchRecognition]);
+  }, [lang, tick, launchRecognition, startAudioCapture]);
 
   /**
    * Switch the language being recognised without losing the note so far.
@@ -136,7 +242,8 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
    * before the new session launches (not captured earlier), and the new
    * session's own callbacks are the only thing allowed to touch shared state
    * for this epoch — see epochRef above — so nothing already on screen can
-   * be clobbered by this switch.
+   * be clobbered by this switch. The audio recording is untouched by a
+   * language switch; it is one continuous capture for the whole segment.
    */
   const switchLang = useCallback(
     (next: Lang) => {
@@ -164,17 +271,19 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     speechRef.current?.stop();
     speechRef.current = null;
 
+    const blob = await stopAudioCapture();
+
     pingEnd();
     if (navigator.vibrate) navigator.vibrate(200); // the phone is often not being looked at
 
     return {
-      blob: new Blob([], { type: 'audio/webm' }),
+      blob,
       durationMs,
       transcript: finalTextRef.current.trim(),
       producedText,
       usedLocalInstall: localInstallRef.current,
     };
-  }, []);
+  }, [stopAudioCapture]);
 
   return { elapsedMs, interimText, finalText, recording, permissionDenied, start, stop, switchLang };
 }
