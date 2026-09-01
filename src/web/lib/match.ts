@@ -31,11 +31,26 @@ export async function refreshTaxonomy(): Promise<void> {
   cached = null; // force recompile on next getMatcher()
 }
 
+/**
+ * On a fresh device, refreshTaxonomy() fires at login but is not awaited
+ * before the operator can start recording (CLAUDE.md: recording never
+ * depends on the network). On patchy 4G that fetch can easily still be in
+ * flight when the operator finishes their first note, and if getMatcher()
+ * runs in that window it would compile an EMPTY taxonomy and — because
+ * `cached` only gets invalidated by refreshTaxonomy() finishing, and only if
+ * it finishes after this call started — that empty result could stay
+ * cached for the rest of the session on a bad enough connection. Every
+ * match after that point silently returns nothing, on every language, not
+ * just the one attempted. This is likely the actual "works, but flaky"
+ * failure reported — not a bad regex, an empty vocabulary at match time.
+ * Fix: never treat an empty result as valid enough to cache.
+ */
 export async function getMatcher(): Promise<CompiledTaxonomy> {
   if (cached) return cached;
   const items = await db.taxonomy.toArray();
-  cached = compile(toMatchable(items as unknown as TaxonomyItemRecord[]));
-  return cached;
+  const compiled = compile(toMatchable(items as unknown as TaxonomyItemRecord[]));
+  if (items.length > 0) cached = compiled;
+  return compiled;
 }
 
 export async function getAllTaxonomy() {

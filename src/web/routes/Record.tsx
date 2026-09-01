@@ -50,6 +50,7 @@ function RecordInner() {
   // second hidden field that silently wins over it.
   const [transcript, setTranscript] = useState('');
   const [items, setItems] = useState<Record<string, 'auto' | 'manual'>>({});
+  const [confirmingApprove, setConfirmingApprove] = useState(false);
 
   const logIdRef = useRef(uuidv7());
   const seqRef = useRef(0);
@@ -118,6 +119,7 @@ function RecordInner() {
   }
 
   async function handleApprove() {
+    setConfirmingApprove(false);
     await finalizeAndQueue(logIdRef.current, transcript, '', items);
     void navigate({ to: '/' });
   }
@@ -233,9 +235,35 @@ function RecordInner() {
         </button>
       </div>
 
-      <button className="btn btn-amber btn-block" style={{ marginTop: 16, minHeight: 64, fontSize: 20 }} onClick={() => void handleApprove()}>
+      <button
+        className="btn btn-amber btn-block"
+        style={{ marginTop: 16, minHeight: 64, fontSize: 20 }}
+        onClick={() => setConfirmingApprove(true)}
+      >
         {t('review.approveButton')}
       </button>
+
+      {/* Approve locks the log for good (CLAUDE.md: only an admin can touch
+          an approved log afterward, and that always appends to an edit
+          trail rather than just changing it back). One stray tap here is
+          otherwise irreversible, so it gets the one confirmation dialog in
+          the whole app. */}
+      {confirmingApprove && (
+        <div className="modal-backdrop" onClick={() => setConfirmingApprove(false)}>
+          <div className="panel modal-card" onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ marginBottom: 8 }}>{t('review.confirmTitle')}</h2>
+            <p style={{ marginBottom: 20 }}>{t('review.confirmBody')}</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-block" onClick={() => setConfirmingApprove(false)}>
+                {t('review.confirmNo')}
+              </button>
+              <button className="btn btn-amber btn-block" onClick={() => void handleApprove()}>
+                {t('review.confirmYes')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

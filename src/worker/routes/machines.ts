@@ -62,6 +62,11 @@ machineRoutes.post('/', requireAdmin, async (c) => {
   if (!body.shedId || !body.machineNo) {
     return c.json({ error: 'shedId and machineNo required' }, 400);
   }
+  // requireAdmin now also passes a shed-scoped admin, not just the owner
+  // tier, so this can no longer assume the caller may touch any shed.
+  if (!(await canAccessShed(c.env.DB, c.get('session'), body.shedId))) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
 
   const id = uuidv7();
   const now = Date.now();
@@ -115,6 +120,9 @@ machineRoutes.post('/bulk', requireAdmin, async (c) => {
     make?: string;
   }>();
   if (!body.shedId || !body.range) return c.json({ error: 'shedId and range required' }, 400);
+  if (!(await canAccessShed(c.env.DB, c.get('session'), body.shedId))) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
 
   const numbers = expandRange(body.range);
   if (numbers.length === 0) return c.json({ error: 'no machine numbers in range' }, 400);
@@ -143,6 +151,14 @@ machineRoutes.patch('/:id', requireAdmin, async (c) => {
     installedOn: string;
     active: boolean;
   }>>();
+
+  const existing = await c.env.DB.prepare('SELECT shed_id FROM machines WHERE id = ?')
+    .bind(id)
+    .first<{ shed_id: string }>();
+  if (!existing) return c.json({ error: 'not found' }, 404);
+  if (!(await canAccessShed(c.env.DB, c.get('session'), existing.shed_id))) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
 
   const { setClause, binds } = buildSetClause({
     machine_no: body.machineNo,

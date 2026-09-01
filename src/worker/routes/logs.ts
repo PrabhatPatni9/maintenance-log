@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
-import { requireAdmin, requireAuth } from '../lib/middleware';
+import { requireAdmin, requireAuth, requireSuperAdmin } from '../lib/middleware';
 import { uuidv7 } from '@shared/id';
 import { audioKey, signUploadToken, verifyUploadToken } from '../lib/r2';
 import { fetchMachineWithShed } from '../lib/machine-lookup';
@@ -192,11 +192,18 @@ logRoutes.delete('/:id', requireAdmin, async (c) => {
   const session = c.get('session');
   const reason = (await c.req.json<{ reason?: string }>().catch(() => ({ reason: undefined })))?.reason;
 
-  const log = await c.env.DB.prepare('SELECT status, deleted_at FROM logs WHERE id = ?')
+  const log = await c.env.DB.prepare('SELECT status, deleted_at, machine_id FROM logs WHERE id = ?')
     .bind(logId)
-    .first<{ status: string; deleted_at: number | null }>();
+    .first<{ status: string; deleted_at: number | null; machine_id: string }>();
   if (!log) return c.json({ error: 'not found' }, 404);
   if (log.deleted_at) return c.json({ ok: true }); // already gone, idempotent
+
+  // requireAdmin now also passes a shed-scoped admin: they may only take a
+  // log they could otherwise see out of the shed they were granted.
+  const machine = await fetchMachineWithShed(c.env.DB, log.machine_id);
+  if (!machine || !(await canAccessShed(c.env.DB, session, machine.shedId))) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
 
   const now = Date.now();
   await c.env.DB.batch([
@@ -210,6 +217,70 @@ logRoutes.delete('/:id', requireAdmin, async (c) => {
        VALUES (?, ?, ?, 'deleted', 'visible', 'deleted', ?, ?)`,
     ).bind(uuidv7(), logId, session.phone, reason?.trim() || 'bogus log', now),
   ]);
+
+  return c.json({ ok: true });
+});
+
+/** Owner tier only: undo an admin's soft-delete. The row was never actually
+ * touched, so this is just clearing the two columns back to null. */
+logRoutes.post('/:id/restore', requireSuperAdmin, async (c) => {
+  const logId = c.req.param('id');
+  const session = c.get('session');
+
+  const log = await c.env.DB.prepare('SELECT deleted_at FROM logs WHERE id = ?')
+    .bind(logId)
+    .first<{ deleted_at: number | null }>();
+  if (!log) return c.json({ error: 'not found' }, 404);
+  if (!log.deleted_at) return c.json({ ok: true }); // was never deleted, idempotent
+
+  await c.env.DB.batch([
+    c.env.DB.prepare('UPDATE logs SET deleted_at = NULL, deleted_by = NULL WHERE id = ?').bind(logId),
+    c.env.DB.prepare(
+      `INSERT INTO admin_audit (id, actor_phone, action, target_type, target_id, detail, created_at)
+       VALUES (?, ?, 'restore_log', 'log', ?, NULL, ?)`,
+    ).bind(uuidv7(), session.phone, logId, Date.now()),
+  ]);
+
+  return c.json({ ok: true });
+});
+
+/**
+ * Owner tier only, and genuinely irreversible: the log, its segments, items
+ * and edit history are all gone (CASCADE off logs.id), not deactivated. A
+ * summary goes to admin_audit first, since that is the only place any trace
+ * of this log survives afterward. Segment audio is best-effort cleaned up
+ * from R2 after the DB commit.
+ */
+logRoutes.delete('/:id/purge', requireSuperAdmin, async (c) => {
+  const logId = c.req.param('id');
+  const session = c.get('session');
+
+  const log = await c.env.DB.prepare('SELECT * FROM logs WHERE id = ?')
+    .bind(logId)
+    .first<Record<string, unknown>>();
+  if (!log) return c.json({ error: 'not found' }, 404);
+
+  const { results: audioRows } = await c.env.DB.prepare(
+    'SELECT audio_key FROM log_segments WHERE log_id = ? AND audio_key IS NOT NULL',
+  )
+    .bind(logId)
+    .all<{ audio_key: string }>();
+
+  await c.env.DB.batch([
+    c.env.DB.prepare('DELETE FROM logs WHERE id = ?').bind(logId),
+    c.env.DB.prepare(
+      `INSERT INTO admin_audit (id, actor_phone, action, target_type, target_id, detail, created_at)
+       VALUES (?, ?, 'purge_log', 'log', ?, ?, ?)`,
+    ).bind(
+      uuidv7(),
+      session.phone,
+      logId,
+      JSON.stringify({ transcript: log.transcript, machineId: log.machine_id, operatorPhone: log.operator_phone }),
+      Date.now(),
+    ),
+  ]);
+
+  await Promise.all(audioRows.map((r) => c.env.AUDIO.delete(r.audio_key).catch(() => {})));
 
   return c.json({ ok: true });
 });

@@ -49,7 +49,8 @@
     "noLogsToday": "आज अजून लॉग नाही. पहिला लॉग रेकॉर्ड करा.",
     "greeting": "नमस्कार, {{name}}",
     "myLogsTitle": "माझे लॉग",
-    "viewAll": "सर्व पहा"
+    "viewAll": "सर्व पहा",
+    "chooseShedTitle": "रेकॉर्ड करण्यासाठी शेड निवडा"
   },
   "machine": {
     "pickShedTitle": "शेड निवडा",
@@ -83,7 +84,11 @@
     "approved": "मंजूर",
     "itemsLabel": "काम आणि पार्ट्स",
     "machineLabel": "मशीन",
-    "dateLabel": "तारीख"
+    "dateLabel": "तारीख",
+    "confirmTitle": "हा लॉग सबमिट करायचा?",
+    "confirmBody": "यानंतर तुम्ही तो बदलू शकणार नाही. ट्रान्सक्रिप्ट आणि पिल्स एकदा पुन्हा तपासा.",
+    "confirmYes": "हो, मंजूर करा",
+    "confirmNo": "मागे जा"
   },
   "logDetail": {
     "title": "लॉग तपशील",
@@ -102,7 +107,12 @@
       "title": "शेड",
       "addShed": "शेड जोडा",
       "codeLabel": "कोड",
-      "nameLabel": "नाव"
+      "nameLabel": "नाव",
+      "hint": "शेड बंद केल्याने त्यातील सर्व मशीन्सही बंद होतात.",
+      "readOnlyHint": "या शेडमधील मशीन्स तुम्ही मॅनेज करू शकता. शेड स्वतः जोडणे, बंद करणे किंवा काढणे फक्त ओनर अकाउंट करू शकते.",
+      "empty": "अजून शेड नाही. वर पहिला शेड जोडा.",
+      "deleteShed": "हटवा",
+      "deleteConfirm": "\"{{name}}\" आणि त्याखालील सर्व मशीन्स व लॉग कायमचे हटवायचे? हे परत होणार नाही."
     },
     "machines": {
       "title": "मशीन्स",
@@ -127,7 +137,8 @@
       "roleOperator": "ऑपरेटर",
       "initialPasswordLabel": "सुरुवातीचा पासवर्ड",
       "shedAccessLabel": "शेड अ‍ॅक्सेस",
-      "editShedAccess": "शेड अ‍ॅक्सेस"
+      "editShedAccess": "शेड अ‍ॅक्सेस",
+      "roleSuperAdmin": "सुपर अ‍ॅडमिन"
     },
     "taxonomy": {
       "title": "टॅक्सोनॉमी",
@@ -155,7 +166,35 @@
       "editReasonRequired": "हा बदल सेव्ह करण्यासाठी कारण लिहिणे आवश्यक आहे.",
       "deleteLog": "हटवा",
       "deleteConfirm": "हा लॉग हटवायचा? तो हिस्ट्री आणि एक्सपोर्टमध्ये दिसणार नाही.",
-      "deleteReason": "हा का हटवला जात आहे?"
+      "deleteReason": "हा का हटवला जात आहे?",
+      "restoreLog": "परत आणा",
+      "purgeLog": "कायमचे हटवा",
+      "purgeConfirm": "हा लॉग कायमचा हटवायचा? हे परत होणार नाही, तुमच्यासाठीही नाही.",
+      "showDeleted": "हटवलेले दाखवा",
+      "deletedBadge": "हटवले"
+    },
+    "dashboardTab": "डॅशबोर्ड",
+    "dashboard": {
+      "title": "डॅशबोर्ड",
+      "logsToday": "आज",
+      "logsWeek": "या आठवड्यात",
+      "logsTotal": "एकूण",
+      "activeOperators": "सक्रिय ऑपरेटर (30 दिवस)",
+      "activeSheds": "सुरू शेड",
+      "activeMachines": "सुरू मशीन्स",
+      "topMachinesTitle": "सर्वाधिक भेट दिलेली मशीन्स",
+      "topActionsTitle": "सर्वाधिक नोंदवलेले काम आणि पार्ट्स",
+      "operatorsTitle": "ऑपरेटर अ‍ॅक्टिव्हिटी",
+      "recentTitle": "अलीकडील अ‍ॅक्टिव्हिटी",
+      "visits": "वेळा",
+      "uses": "वेळा",
+      "logs": "लॉग",
+      "machines": "मशीन्स",
+      "lastActive": "शेवटचे सक्रिय",
+      "noData": "अजून काही नोंदवले नाही.",
+      "viewMachine": "काय काय झाले",
+      "machineHistoryTitle": "या मशीनवर नोंदवलेले काम आणि पार्ट्स",
+      "never": "कधीच नाही"
     }
   },
   "settings": {

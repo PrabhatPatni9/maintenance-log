@@ -43,7 +43,7 @@ function SettingsInner() {
       {/* The only way into the admin panel, and it is only rendered for an
           admin. An operator never sees that there is one — the server
           enforces it too, so a guessed URL gets them nothing. */}
-      {user?.role === 'admin' && (
+      {(user?.role === 'admin' || user?.role === 'super_admin') && (
         <Link to="/admin/sheds" className="btn btn-primary btn-block admin-entry">
           {t('settings.adminPanel')}
         </Link>

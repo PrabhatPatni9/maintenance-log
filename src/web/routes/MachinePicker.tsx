@@ -40,6 +40,14 @@ function MachinePickerInner() {
     const [s, m] = await Promise.all([db.sheds.toArray(), db.machines.toArray()]);
     setSheds(s);
     setMachines(m);
+
+    // Home's shed cards jump straight in here with a shed already chosen.
+    const preselected = sessionStorage.getItem('preselectedShedId');
+    sessionStorage.removeItem('preselectedShedId');
+    if (preselected && s.some((sh) => sh.id === preselected)) {
+      setSelectedShedId(preselected);
+      return;
+    }
     // Only one shed to see? Skip the shed-picking step entirely.
     if (s.length === 1) setSelectedShedId(s[0]!.id);
   }

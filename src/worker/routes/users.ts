@@ -1,12 +1,15 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
-import { requireAdmin, requireAuth } from '../lib/middleware';
+import { requireSuperAdmin, requireAuth } from '../lib/middleware';
 import { hashDerivedKey } from '../lib/auth';
 import { mapUser } from '../lib/mappers';
 import { setUserSheds } from '../lib/shed-access';
 
+// Owner tier only: "Super admin is the one who creates the admins and the
+// operators if needed" — account management does not belong to a
+// shed-scoped admin at all, only to the tier with no scoping.
 export const userRoutes = new Hono<AppEnv>();
-userRoutes.use('*', requireAuth, requireAdmin);
+userRoutes.use('*', requireAuth, requireSuperAdmin);
 
 userRoutes.get('/', async (c) => {
   const { results } = await c.env.DB.prepare(
@@ -29,14 +32,20 @@ userRoutes.get('/:phone/sheds', async (c) => {
  * src/web/lib/crypto.ts). The server only ever sees `derivedKey`, never the
  * plaintext password, and does the same one SHA-256 it does at login time.
  *
- * `shedIds` is which sheds an operator can see at all (CLAUDE.md's access
- * model). Ignored for admins, who always see every shed.
+ * `shedIds` is which sheds a shed-scoped user can see at all (CLAUDE.md's
+ * access model) — applies to 'admin' now too, not just 'operator', since a
+ * plain admin is scoped exactly like an operator. Ignored for super_admin,
+ * who always sees every shed with no grant needed.
+ *
+ * `role='super_admin'` is not a legal DB value (see migration 0004) — it is
+ * stored as role='admin' plus is_super_admin=1, and mapUser folds that back
+ * into the three-way Role everywhere else in the app.
  */
 userRoutes.post('/', async (c) => {
   const body = await c.req.json<{
     phone: string;
     name: string;
-    role: 'admin' | 'operator';
+    role: 'super_admin' | 'admin' | 'operator';
     lang: 'en' | 'hi' | 'mr';
     salt: string;
     derivedKey: string;
@@ -49,15 +58,17 @@ userRoutes.post('/', async (c) => {
   const session = c.get('session');
   const passHash = await hashDerivedKey(body.derivedKey);
   const now = Date.now();
+  const isSuperAdmin = body.role === 'super_admin';
+  const dbRole = isSuperAdmin ? 'admin' : body.role;
 
   await c.env.DB.prepare(
-    `INSERT INTO users (phone, name, role, lang, pass_hash, pass_salt, active, created_at, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+    `INSERT INTO users (phone, name, role, lang, pass_hash, pass_salt, active, created_at, created_by, is_super_admin)
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
   )
-    .bind(body.phone, body.name, body.role, body.lang, passHash, body.salt, now, session.phone)
+    .bind(body.phone, body.name, dbRole, body.lang, passHash, body.salt, now, session.phone, isSuperAdmin ? 1 : 0)
     .run();
 
-  if (body.role === 'operator' && body.shedIds?.length) {
+  if ((body.role === 'operator' || body.role === 'admin') && body.shedIds?.length) {
     await setUserSheds(c.env.DB, body.phone, body.shedIds);
   }
 

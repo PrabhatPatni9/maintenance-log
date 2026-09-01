@@ -5,7 +5,16 @@
 
 export type Lang = 'en' | 'hi' | 'mr';
 
-export type Role = 'admin' | 'operator';
+/**
+ * Three tiers, not two. `operator` records logs. `admin` is the shed-level
+ * supervisor: manages machines within sheds they were granted, same
+ * shed-scoping model as an operator (via user_sheds), can soft-delete a
+ * bogus log from view. `super_admin` is the owner tier: creates every
+ * account (including other admins), creates/removes sheds, sees every shed
+ * with no scoping, and is the only role that can permanently purge a log or
+ * restore one an admin soft-deleted.
+ */
+export type Role = 'super_admin' | 'admin' | 'operator';
 
 export type LogStatus =
   | 'pending_transcription'

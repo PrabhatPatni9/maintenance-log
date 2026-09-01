@@ -42,11 +42,21 @@ export function mapMachine(r: Record<string, unknown>): Machine {
   };
 }
 
+/**
+ * `role` is 'admin' | 'operator' at the DB level — `super_admin` could not be
+ * added as a third CHECK value without recreating the users table, which D1
+ * refuses while other tables hold a foreign key into it (see migration
+ * 0004's comment). The owner tier is `role='admin'` plus `is_super_admin=1`
+ * instead, and this mapper is the one place that folds the two DB columns
+ * back into the single three-way Role the rest of the app deals in.
+ */
 export function mapUser(r: Record<string, unknown>): User {
+  const dbRole = r.role as 'admin' | 'operator';
+  const role: Role = dbRole === 'admin' && Boolean(r.is_super_admin) ? 'super_admin' : dbRole;
   return {
     phone: r.phone as string,
     name: r.name as string,
-    role: r.role as Role,
+    role,
     lang: r.lang as Lang,
     active: Boolean(r.active),
     createdAt: r.created_at as number,

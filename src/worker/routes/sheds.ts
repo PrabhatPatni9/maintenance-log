@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
-import { requireAdmin, requireAuth } from '../lib/middleware';
+import { requireSuperAdmin, requireAuth } from '../lib/middleware';
 import { mapShed } from '../lib/mappers';
 import { accessibleShedIds } from '../lib/shed-access';
 import { uuidv7 } from '@shared/id';
@@ -32,7 +32,7 @@ shedRoutes.get('/', async (c) => {
   return c.json({ sheds: results.map(mapShed) });
 });
 
-shedRoutes.post('/', requireAdmin, async (c) => {
+shedRoutes.post('/', requireSuperAdmin, async (c) => {
   const { code, name } = await c.req.json<{ code: string; name: string }>();
   if (!code || !name) return c.json({ error: 'code and name required' }, 400);
 
@@ -47,7 +47,7 @@ shedRoutes.post('/', requireAdmin, async (c) => {
   return c.json({ shed: { id, code, name, active: true, createdAt: now } }, 201);
 });
 
-shedRoutes.patch('/:id', requireAdmin, async (c) => {
+shedRoutes.patch('/:id', requireSuperAdmin, async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json<{ name?: string; active?: boolean }>();
 
@@ -72,4 +72,71 @@ shedRoutes.patch('/:id', requireAdmin, async (c) => {
     .first<Record<string, unknown>>();
   if (!row) return c.json({ error: 'not found' }, 404);
   return c.json({ shed: mapShed(row) });
+});
+
+/**
+ * Owner tier only, and genuinely destructive: every machine, log, segment,
+ * item and edit under this shed is gone, not deactivated. Deactivate (PATCH
+ * active:false) is the routine, reversible operation; this is for "this
+ * shed does not exist, remove it and everything in it."
+ *
+ * D1 enforces foreign keys, so the delete order matters: logs first (which
+ * cascades to log_segments/log_items/log_edits/match_misses on its own FKs),
+ * then machines, then the shed itself (which cascades user_sheds). Audio
+ * blobs are best-effort cleaned up after the DB commit — losing a stray R2
+ * object is a cost worth paying rather than blocking the delete on R2 being
+ * reachable. A summary goes to admin_audit before anything is removed,
+ * since nothing here can be reconstructed from the DB afterward.
+ */
+shedRoutes.delete('/:id', requireSuperAdmin, async (c) => {
+  const id = c.req.param('id');
+  const session = c.get('session');
+
+  const shed = await c.env.DB.prepare('SELECT * FROM sheds WHERE id = ?')
+    .bind(id)
+    .first<Record<string, unknown>>();
+  if (!shed) return c.json({ error: 'not found' }, 404);
+
+  const [{ results: audioRows }, counts] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT ls.audio_key FROM log_segments ls
+       JOIN logs l ON l.id = ls.log_id
+       JOIN machines m ON m.id = l.machine_id
+       WHERE m.shed_id = ? AND ls.audio_key IS NOT NULL`,
+    )
+      .bind(id)
+      .all<{ audio_key: string }>(),
+    c.env.DB.batch([
+      c.env.DB.prepare('SELECT COUNT(*) AS n FROM machines WHERE shed_id = ?').bind(id),
+      c.env.DB.prepare(
+        'SELECT COUNT(*) AS n FROM logs WHERE machine_id IN (SELECT id FROM machines WHERE shed_id = ?)',
+      ).bind(id),
+    ]),
+  ]);
+  const machineCount = (counts[0]!.results[0] as { n: number }).n;
+  const logCount = (counts[1]!.results[0] as { n: number }).n;
+
+  await c.env.DB.batch([
+    c.env.DB.prepare(
+      'DELETE FROM logs WHERE machine_id IN (SELECT id FROM machines WHERE shed_id = ?)',
+    ).bind(id),
+    c.env.DB.prepare('DELETE FROM machines WHERE shed_id = ?').bind(id),
+    c.env.DB.prepare('DELETE FROM sheds WHERE id = ?').bind(id),
+    c.env.DB.prepare(
+      `INSERT INTO admin_audit (id, actor_phone, action, target_type, target_id, detail, created_at)
+       VALUES (?, ?, 'delete_shed', 'shed', ?, ?, ?)`,
+    ).bind(
+      uuidv7(),
+      session.phone,
+      id,
+      JSON.stringify({ code: shed.code, name: shed.name, machineCount, logCount }),
+      Date.now(),
+    ),
+  ]);
+
+  await Promise.all(
+    audioRows.map((r) => c.env.AUDIO.delete(r.audio_key).catch(() => {})),
+  );
+
+  return c.json({ ok: true, deleted: { machines: machineCount, logs: logCount } });
 });

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
 import { requireAdmin, requireAuth } from '../lib/middleware';
 import { buildHistoryExportQuery, buildHistoryQuery, type HistoryFilters } from '../lib/history-query';
+import { accessibleShedIds } from '../lib/shed-access';
 import { toCsv } from '../lib/csv';
 import { uuidv7 } from '@shared/id';
 
@@ -22,10 +23,16 @@ function filtersFromQuery(c: { req: { query(name: string): string | undefined } 
 const PAGE_SIZE = 50;
 
 historyRoutes.get('/', async (c) => {
+  const session = c.get('session');
   const filters = filtersFromQuery(c);
   const page = Number(c.req.query('page') ?? 0);
+  const shedIds = await accessibleShedIds(c.env.DB, session);
+  // Only the owner tier can ask to see deleted rows — a plain admin's own
+  // soft-deletes still stay out of their own view, exactly as CLAUDE.md's
+  // "delete from the admin/user view" asked for.
+  const includeDeleted = session.role === 'super_admin' && c.req.query('includeDeleted') === '1';
 
-  const { sql, binds } = buildHistoryQuery(filters, { page, pageSize: PAGE_SIZE });
+  const { sql, binds } = buildHistoryQuery(filters, { shedIds, includeDeleted }, { page, pageSize: PAGE_SIZE });
   const { results } = await c.env.DB.prepare(sql)
     .bind(...binds)
     .all<Record<string, unknown>>();
@@ -34,8 +41,10 @@ historyRoutes.get('/', async (c) => {
 });
 
 historyRoutes.get('/export.csv', async (c) => {
+  const session = c.get('session');
   const filters = filtersFromQuery(c);
-  const { sql, binds } = buildHistoryExportQuery(filters);
+  const shedIds = await accessibleShedIds(c.env.DB, session);
+  const { sql, binds } = buildHistoryExportQuery(filters, { shedIds });
   const { results } = await c.env.DB.prepare(sql)
     .bind(...binds)
     .all<Record<string, unknown>>();
@@ -83,7 +92,7 @@ historyRoutes.get('/export.csv', async (c) => {
 
 /**
  * Admin edit on an approved (immutable) log. Never overwrites — every change
- * appends a row to log_edits with the before/after and a required reason
+ * appends to log_edits with the before/after and a required reason
  * (CLAUDE.md section 2.4, section 5).
  */
 historyRoutes.patch('/logs/:id', async (c) => {

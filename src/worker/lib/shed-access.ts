@@ -1,12 +1,14 @@
 import type { SessionRecord } from './env';
 
-/** Admins are exempt from user_sheds and always see every shed; operators
- * only ever see what an admin explicitly granted them. */
+/** Only the owner tier is exempt from user_sheds and sees every shed with no
+ * scoping. A plain `admin` is shed-scoped exactly like an operator — the
+ * same user_sheds grant, just with machine/taxonomy/history management
+ * rights inside those sheds instead of only being able to record logs. */
 export async function accessibleShedIds(
   db: D1Database,
   session: SessionRecord,
 ): Promise<string[] | 'all'> {
-  if (session.role === 'admin') return 'all';
+  if (session.role === 'super_admin') return 'all';
   const { results } = await db
     .prepare('SELECT shed_id FROM user_sheds WHERE user_phone = ?')
     .bind(session.phone)
@@ -19,7 +21,7 @@ export async function canAccessShed(
   session: SessionRecord,
   shedId: string,
 ): Promise<boolean> {
-  if (session.role === 'admin') return true;
+  if (session.role === 'super_admin') return true;
   const row = await db
     .prepare('SELECT 1 FROM user_sheds WHERE user_phone = ? AND shed_id = ?')
     .bind(session.phone, shedId)

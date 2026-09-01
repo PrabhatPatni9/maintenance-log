@@ -2,7 +2,20 @@ import { useEffect, useState } from 'react';
 import { useT } from '../../i18n';
 import { api } from '../../lib/api';
 import { deriveKeyB64, generateSaltB64 } from '../../lib/crypto';
+import { RequireSuperAdmin } from '../../lib/guards';
 import type { Role, User, Lang, Shed } from '@shared/types';
+
+const ROLE_KEY: Record<Role, string> = {
+  super_admin: 'admin.users.roleSuperAdmin',
+  admin: 'admin.users.roleAdmin',
+  operator: 'admin.users.roleOperator',
+};
+
+/** Only these two tiers are shed-scoped; super_admin sees every shed with no
+ * grant needed, so there is nothing to check boxes for. */
+function isShedScoped(role: Role): boolean {
+  return role === 'operator' || role === 'admin';
+}
 
 function ShedCheckboxes({
   sheds,
@@ -79,13 +92,13 @@ function UserRow({ u, sheds, onChanged }: { u: User; sheds: Shed[]; onChanged():
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600 }}>{u.name}</div>
           <div className="meta">
-            {u.phone} · {t(u.role === 'admin' ? 'admin.users.roleAdmin' : 'admin.users.roleOperator')}
+            {u.phone} · {t(ROLE_KEY[u.role])}
             {!u.active && ` · ${t('common.inactive')}`}
           </div>
         </div>
       </div>
       <div className="user-row-actions">
-        {u.role === 'operator' && (
+        {isShedScoped(u.role) && (
           <button className="btn btn-small" onClick={() => void startEdit()}>
             {t('admin.users.editShedAccess')}
           </button>
@@ -112,7 +125,7 @@ function UserRow({ u, sheds, onChanged }: { u: User; sheds: Shed[]; onChanged():
   );
 }
 
-export function Users() {
+function UsersInner() {
   const t = useT();
   const [users, setUsers] = useState<User[]>([]);
   const [sheds, setSheds] = useState<Shed[]>([]);
@@ -173,6 +186,7 @@ export function Users() {
             <select className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}>
               <option value="operator">{t('admin.users.roleOperator')}</option>
               <option value="admin">{t('admin.users.roleAdmin')}</option>
+              <option value="super_admin">{t('admin.users.roleSuperAdmin')}</option>
             </select>
           </div>
           <div>
@@ -196,7 +210,7 @@ export function Users() {
           />
         </div>
 
-        {role === 'operator' && <ShedCheckboxes sheds={sheds} selected={shedIds} onChange={setShedIds} />}
+        {isShedScoped(role) && <ShedCheckboxes sheds={sheds} selected={shedIds} onChange={setShedIds} />}
 
         <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
           {t('admin.users.addUser')}
@@ -209,5 +223,13 @@ export function Users() {
         ))}
       </ul>
     </div>
+  );
+}
+
+export function Users() {
+  return (
+    <RequireSuperAdmin>
+      <UsersInner />
+    </RequireSuperAdmin>
   );
 }

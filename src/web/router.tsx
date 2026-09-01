@@ -19,6 +19,7 @@ const Machines = lazyRouteComponent(() => import('./routes/admin/Machines'), 'Ma
 const Users = lazyRouteComponent(() => import('./routes/admin/Users'), 'Users');
 const Taxonomy = lazyRouteComponent(() => import('./routes/admin/Taxonomy'), 'Taxonomy');
 const History = lazyRouteComponent(() => import('./routes/admin/History'), 'History');
+const Dashboard = lazyRouteComponent(() => import('./routes/admin/Dashboard'), 'Dashboard');
 
 function RootLayout() {
   const { user } = useAuth();
@@ -62,6 +63,7 @@ const adminMachinesRoute = createRoute({ getParentRoute: () => adminRoute, path:
 const adminUsersRoute = createRoute({ getParentRoute: () => adminRoute, path: '/users', component: Users });
 const adminTaxonomyRoute = createRoute({ getParentRoute: () => adminRoute, path: '/taxonomy', component: Taxonomy });
 const adminHistoryRoute = createRoute({ getParentRoute: () => adminRoute, path: '/history', component: History });
+const adminDashboardRoute = createRoute({ getParentRoute: () => adminRoute, path: '/dashboard', component: Dashboard });
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -78,6 +80,7 @@ const routeTree = rootRoute.addChildren([
     adminUsersRoute,
     adminTaxonomyRoute,
     adminHistoryRoute,
+    adminDashboardRoute,
   ]),
 ]);
 

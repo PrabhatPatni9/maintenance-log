@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useT } from '../../i18n';
+import { useAuth } from '../../lib/auth-context';
 import { api } from '../../lib/api';
 import type { Shed } from '@shared/types';
 
@@ -7,6 +8,8 @@ interface HistoryRow {
   log_id: string;
   client_created_at: number;
   transcript: string | null;
+  deleted_at: number | null;
+  deleted_by: string | null;
   shed_code: string;
   machine_no: string;
   operator_name: string;
@@ -18,10 +21,13 @@ interface HistoryRow {
 
 export function History() {
   const t = useT();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
   const [sheds, setSheds] = useState<Shed[]>([]);
   const [shedId, setShedId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [showDeleted, setShowDeleted] = useState(false);
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<HistoryRow | null>(null);
@@ -37,6 +43,7 @@ export function History() {
     if (shedId) params.set('shedId', shedId);
     if (dateFrom) params.set('dateFrom', String(new Date(dateFrom).getTime()));
     if (dateTo) params.set('dateTo', String(new Date(dateTo).getTime()));
+    if (isSuperAdmin && showDeleted) params.set('includeDeleted', '1');
     params.set('page', String(page));
     return params.toString();
   }
@@ -45,7 +52,7 @@ export function History() {
     void api.get<{ rows: HistoryRow[] }>(`/admin/history?${query()}`).then((r) => setRows(r.rows));
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(search, [page]);
+  useEffect(search, [page, showDeleted]);
 
   function exportCsv() {
     const params = new URLSearchParams();
@@ -66,6 +73,17 @@ export function History() {
     await api.del(`/logs/${row.log_id}`, { reason });
     // Drop every row for that log — history is one row per item, so a log
     // with three items has three rows on screen.
+    setRows((prev) => prev.filter((r) => r.log_id !== row.log_id));
+  }
+
+  async function restoreLog(row: HistoryRow) {
+    await api.post(`/logs/${row.log_id}/restore`);
+    search();
+  }
+
+  async function purgeLog(row: HistoryRow) {
+    if (!window.confirm(t('admin.history.purgeConfirm'))) return;
+    await api.del(`/logs/${row.log_id}/purge`);
     setRows((prev) => prev.filter((r) => r.log_id !== row.log_id));
   }
 
@@ -110,6 +128,19 @@ export function History() {
         <button className="btn" onClick={exportCsv}>
           {t('admin.history.exportCsv')}
         </button>
+        {isSuperAdmin && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input
+              type="checkbox"
+              checked={showDeleted}
+              onChange={(e) => {
+                setShowDeleted(e.target.checked);
+                setPage(0);
+              }}
+            />
+            {t('admin.history.showDeleted')}
+          </label>
+        )}
       </div>
 
       {rows.length === 0 && <p className="meta">{t('admin.history.noResults')}</p>}
@@ -118,7 +149,10 @@ export function History() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={`${r.log_id}-${r.item_code}-${i}`} style={{ borderBottom: '1px solid var(--line)' }}>
+              <tr
+                key={`${r.log_id}-${r.item_code}-${i}`}
+                style={{ borderBottom: '1px solid var(--line)', opacity: r.deleted_at ? 0.6 : 1 }}
+              >
                 <td style={{ padding: 8 }}>{new Date(r.client_created_at).toLocaleDateString()}</td>
                 <td style={{ padding: 8 }}>
                   {r.shed_code}
@@ -127,25 +161,44 @@ export function History() {
                 <td style={{ padding: 8 }}>{r.operator_name}</td>
                 <td style={{ padding: 8 }}>{r.label_en ?? ''}</td>
                 <td style={{ padding: 8, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {r.transcript}
+                  {r.deleted_at ? `[${t('admin.history.deletedBadge')}] ${r.transcript ?? ''}` : r.transcript}
                 </td>
                 <td style={{ padding: 8, whiteSpace: 'nowrap' }}>
-                  <button
-                    className="btn btn-small"
-                    onClick={() => {
-                      setEditing(r);
-                      setEditText(r.transcript ?? '');
-                    }}
-                  >
-                    {t('common.edit')}
-                  </button>
-                  <button
-                    className="btn btn-small btn-danger"
-                    style={{ marginLeft: 6 }}
-                    onClick={() => void deleteLog(r)}
-                  >
-                    {t('admin.history.deleteLog')}
-                  </button>
+                  {r.deleted_at ? (
+                    isSuperAdmin && (
+                      <>
+                        <button className="btn btn-small" onClick={() => void restoreLog(r)}>
+                          {t('admin.history.restoreLog')}
+                        </button>
+                        <button
+                          className="btn btn-small btn-danger"
+                          style={{ marginLeft: 6 }}
+                          onClick={() => void purgeLog(r)}
+                        >
+                          {t('admin.history.purgeLog')}
+                        </button>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <button
+                        className="btn btn-small"
+                        onClick={() => {
+                          setEditing(r);
+                          setEditText(r.transcript ?? '');
+                        }}
+                      >
+                        {t('common.edit')}
+                      </button>
+                      <button
+                        className="btn btn-small btn-danger"
+                        style={{ marginLeft: 6 }}
+                        onClick={() => void deleteLog(r)}
+                      >
+                        {t('admin.history.deleteLog')}
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

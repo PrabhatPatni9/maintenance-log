@@ -542,6 +542,143 @@ a:focus-visible {
   color: var(--panel);
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 25, 26, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  z-index: 100;
+}
+
+@media (min-width: 480px) {
+  .modal-backdrop {
+    align-items: center;
+    padding: 20px;
+  }
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-bottom: none;
+}
+
+@media (min-width: 480px) {
+  .modal-card {
+    padding: 24px;
+    border: 1px solid var(--line);
+  }
+}
+
+/* --- Home -------------------------------------------------------------- */
+
+.record-cta {
+  min-height: 96px;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.home-shed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.home-shed-card {
+  min-height: 84px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  text-align: left;
+  transition: background-color 100ms, transform 100ms;
+}
+
+.home-shed-card:active {
+  transform: translateY(1px);
+  background: var(--base);
+}
+
+.home-shed-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* --- Dashboard ------------------------------------------------------- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.stat-tile {
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.dash-section-title {
+  font-size: 15px;
+  color: var(--steel);
+  margin: 24px 0 10px;
+}
+
+.dash-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.dash-drilldown {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--ink);
+  background: var(--panel);
+}
+
+.dash-drilldown-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.dash-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dash-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 14px;
+}
+
 .admin-entry {
   display: flex;
   align-items: center;

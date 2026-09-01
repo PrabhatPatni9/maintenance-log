@@ -9,6 +9,7 @@ import { userRoutes } from './routes/users';
 import { taxonomyRoutes } from './routes/taxonomy';
 import { logRoutes } from './routes/logs';
 import { historyRoutes } from './routes/history';
+import { dashboardRoutes } from './routes/dashboard';
 import { transcribeLog } from './lib/transcribe';
 import { selectProvider } from './stt/select';
 
@@ -30,6 +31,7 @@ app.route('/api/admin/users', userRoutes);
 app.route('/api/taxonomy', taxonomyRoutes);
 app.route('/api/logs', logRoutes);
 app.route('/api/admin/history', historyRoutes);
+app.route('/api/admin/dashboard', dashboardRoutes);
 
 app.notFound((c) => {
   if (new URL(c.req.url).pathname.startsWith('/api/')) return c.json({ error: 'not found' }, 404);

@@ -49,7 +49,8 @@
     "noLogsToday": "No logs yet today. Record your first one.",
     "greeting": "Hello, {{name}}",
     "myLogsTitle": "My logs",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "chooseShedTitle": "Choose a shed to record"
   },
   "machine": {
     "pickShedTitle": "Choose a shed",
@@ -83,7 +84,11 @@
     "approved": "Approved",
     "itemsLabel": "Actions and parts",
     "machineLabel": "Machine",
-    "dateLabel": "Date"
+    "dateLabel": "Date",
+    "confirmTitle": "Submit this log?",
+    "confirmBody": "You won't be able to change it after this. Check the transcript and pills once more.",
+    "confirmYes": "Yes, approve",
+    "confirmNo": "Go back"
   },
   "logDetail": {
     "title": "Log detail",
@@ -102,7 +107,12 @@
       "title": "Sheds",
       "addShed": "Add shed",
       "codeLabel": "Code",
-      "nameLabel": "Name"
+      "nameLabel": "Name",
+      "hint": "Turning a shed off also turns off every machine in it.",
+      "readOnlyHint": "Machines inside these sheds are yours to manage. Only the owner account can add, switch off, or remove a shed itself.",
+      "empty": "No sheds yet. Add the first one above.",
+      "deleteShed": "Delete",
+      "deleteConfirm": "Permanently delete \"{{name}}\" and every machine and log under it? This cannot be undone."
     },
     "machines": {
       "title": "Machines",
@@ -127,7 +137,8 @@
       "roleOperator": "Operator",
       "initialPasswordLabel": "Initial password",
       "shedAccessLabel": "Shed access",
-      "editShedAccess": "Shed access"
+      "editShedAccess": "Shed access",
+      "roleSuperAdmin": "Super admin"
     },
     "taxonomy": {
       "title": "Taxonomy",
@@ -155,7 +166,35 @@
       "editReasonRequired": "A reason is required to save this edit.",
       "deleteLog": "Delete",
       "deleteConfirm": "Delete this log? It stops appearing in history and exports.",
-      "deleteReason": "Why is this being deleted?"
+      "deleteReason": "Why is this being deleted?",
+      "restoreLog": "Restore",
+      "purgeLog": "Delete permanently",
+      "purgeConfirm": "Permanently delete this log? This cannot be undone, not even by you.",
+      "showDeleted": "Show deleted",
+      "deletedBadge": "Deleted"
+    },
+    "dashboardTab": "Dashboard",
+    "dashboard": {
+      "title": "Dashboard",
+      "logsToday": "Today",
+      "logsWeek": "This week",
+      "logsTotal": "All time",
+      "activeOperators": "Operators active (30d)",
+      "activeSheds": "Sheds on",
+      "activeMachines": "Machines on",
+      "topMachinesTitle": "Most visited machines",
+      "topActionsTitle": "Most logged actions and parts",
+      "operatorsTitle": "Operator activity",
+      "recentTitle": "Recent activity",
+      "visits": "visits",
+      "uses": "times",
+      "logs": "logs",
+      "machines": "machines",
+      "lastActive": "Last active",
+      "noData": "Nothing logged yet.",
+      "viewMachine": "What has been done",
+      "machineHistoryTitle": "Actions and parts logged on this machine",
+      "never": "never"
     }
   },
   "settings": {
