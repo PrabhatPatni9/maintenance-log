@@ -7,7 +7,7 @@ const TABS: { to: string; key: string; superAdminOnly?: boolean }[] = [
   { to: '/admin/dashboard', key: 'admin.dashboardTab', superAdminOnly: true },
   { to: '/admin/sheds', key: 'admin.shedsTab' },
   { to: '/admin/machines', key: 'admin.machinesTab' },
-  { to: '/admin/users', key: 'admin.usersTab', superAdminOnly: true },
+  { to: '/admin/users', key: 'admin.usersTab' },
   { to: '/admin/taxonomy', key: 'admin.taxonomyTab' },
   { to: '/admin/history', key: 'admin.historyTab' },
 ];

@@ -1,25 +1,67 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
-import { requireSuperAdmin, requireAuth } from '../lib/middleware';
+import { requireAdmin, requireAuth } from '../lib/middleware';
 import { hashDerivedKey } from '../lib/auth';
 import { mapUser } from '../lib/mappers';
-import { setUserSheds } from '../lib/shed-access';
+import { accessibleShedIds, setUserSheds } from '../lib/shed-access';
+import type { SessionRecord } from '../lib/env';
 
-// Owner tier only: "Super admin is the one who creates the admins and the
-// operators if needed" — account management does not belong to a
-// shed-scoped admin at all, only to the tier with no scoping.
+/**
+ * Owner tier manages every account. A shed-scoped admin can now add
+ * operators too — "distribute" a slice of the sheds they were granted to
+ * someone doing the recording — but never another admin or the owner tier,
+ * and never an operator outside their own roster. Every route below trusts
+ * nothing from the client about role or shed scope beyond what the caller's
+ * own session already proves.
+ */
 export const userRoutes = new Hono<AppEnv>();
-userRoutes.use('*', requireAuth, requireSuperAdmin);
+userRoutes.use('*', requireAuth, requireAdmin);
+
+/** True for the accounts a shed-scoped admin is allowed to see or touch at
+ * all: operators they personally created. Everyone else's account — other
+ * admins, the owner tier, operators someone else added — is invisible to
+ * them here, same as CLAUDE.md's "admin has shed-level access" model applied
+ * to people, not just sheds. The owner tier has no such restriction. */
+function canManage(session: SessionRecord, target: { role: string; created_by: unknown }): boolean {
+  if (session.role === 'super_admin') return true;
+  return target.role === 'operator' && target.created_by === session.phone;
+}
+
+/** Every requested shed must already be one the calling admin holds — an
+ * admin can only ever distribute a subset of their own access, never grant
+ * a shed they cannot see themselves. Returns the offending id, or null if
+ * every id checks out. */
+async function firstShedOutsideGrant(
+  db: D1Database,
+  session: SessionRecord,
+  shedIds: string[],
+): Promise<string | null> {
+  if (session.role === 'super_admin') return null;
+  const allowed = new Set(await accessibleShedIds(db, session) as string[]);
+  return shedIds.find((id) => !allowed.has(id)) ?? null;
+}
 
 userRoutes.get('/', async (c) => {
-  const { results } = await c.env.DB.prepare(
-    'SELECT * FROM users ORDER BY active DESC, name',
-  ).all<Record<string, unknown>>();
+  const session = c.get('session');
+  const stmt =
+    session.role === 'super_admin'
+      ? c.env.DB.prepare('SELECT * FROM users ORDER BY active DESC, name')
+      : c.env.DB.prepare(
+          "SELECT * FROM users WHERE role = 'operator' AND created_by = ? ORDER BY active DESC, name",
+        ).bind(session.phone);
+  const { results } = await stmt.all<Record<string, unknown>>();
   return c.json({ users: results.map(mapUser) });
 });
 
 userRoutes.get('/:phone/sheds', async (c) => {
   const phone = c.req.param('phone');
+  const session = c.get('session');
+
+  const target = await c.env.DB.prepare('SELECT role, created_by FROM users WHERE phone = ?')
+    .bind(phone)
+    .first<{ role: string; created_by: unknown }>();
+  if (!target || !canManage(session, target)) return c.json({ error: 'forbidden' }, 403);
+
   const { results } = await c.env.DB.prepare('SELECT shed_id FROM user_sheds WHERE user_phone = ?')
     .bind(phone)
     .all<{ shed_id: string }>();
@@ -56,6 +98,20 @@ userRoutes.post('/', async (c) => {
   }
 
   const session = c.get('session');
+
+  // A shed-scoped admin can only ever create an operator — never another
+  // admin, and never the owner tier. This is the actual permission
+  // boundary; hiding the role picker in the UI is a courtesy, not the
+  // guard, since a request can always be handwritten.
+  if (session.role !== 'super_admin' && body.role !== 'operator') {
+    return c.json({ error: 'admins may only add operators' }, 403);
+  }
+
+  const outsideGrant = await firstShedOutsideGrant(c.env.DB, session, body.shedIds ?? []);
+  if (outsideGrant) {
+    return c.json({ error: `shed ${outsideGrant} is not one of your own` }, 403);
+  }
+
   const passHash = await hashDerivedKey(body.derivedKey);
   const now = Date.now();
   const isSuperAdmin = body.role === 'super_admin';
@@ -80,7 +136,19 @@ userRoutes.post('/', async (c) => {
 
 userRoutes.patch('/:phone', async (c) => {
   const phone = c.req.param('phone');
+  const session = c.get('session');
   const body = await c.req.json<{ active?: boolean; name?: string; shedIds?: string[] }>();
+
+  const target = await c.env.DB.prepare('SELECT role, created_by FROM users WHERE phone = ?')
+    .bind(phone)
+    .first<{ role: string; created_by: unknown }>();
+  if (!target) return c.json({ error: 'not found' }, 404);
+  if (!canManage(session, target)) return c.json({ error: 'forbidden' }, 403);
+
+  if (body.shedIds !== undefined) {
+    const outsideGrant = await firstShedOutsideGrant(c.env.DB, session, body.shedIds);
+    if (outsideGrant) return c.json({ error: `shed ${outsideGrant} is not one of your own` }, 403);
+  }
 
   if (body.active !== undefined) {
     await c.env.DB.prepare('UPDATE users SET active = ? WHERE phone = ?')

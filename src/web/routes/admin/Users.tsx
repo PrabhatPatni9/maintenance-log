@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useT } from '../../i18n';
-import { api } from '../../lib/api';
+import { api, ApiError } from '../../lib/api';
 import { deriveKeyB64, generateSaltB64 } from '../../lib/crypto';
-import { RequireSuperAdmin } from '../../lib/guards';
+import { useAuth } from '../../lib/auth-context';
+import { RequireAdmin } from '../../lib/guards';
 import type { Role, User, Lang, Shed } from '@shared/types';
 
 const ROLE_KEY: Record<Role, string> = {
@@ -127,18 +128,27 @@ function UserRow({ u, sheds, onChanged }: { u: User; sheds: Shed[]; onChanged():
 
 function UsersInner() {
   const t = useT();
+  const { user: me } = useAuth();
+  const isSuperAdmin = me?.role === 'super_admin';
   const [users, setUsers] = useState<User[]>([]);
   const [sheds, setSheds] = useState<Shed[]>([]);
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
+  // A shed-scoped admin can only ever add an operator (CLAUDE.md's role
+  // model: "Admins can only add operators"), so the role picker itself only
+  // exists for the owner tier — there is nothing else to choose otherwise.
   const [role, setRole] = useState<Role>('operator');
   const [lang, setLang] = useState<Lang>('hi');
   const [password, setPassword] = useState('');
   const [shedIds, setShedIds] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  const [addError, setAddError] = useState('');
 
   function refresh() {
     void api.get<{ users: User[] }>('/admin/users').then((r) => setUsers(r.users));
+    // Already shed-scoped server side for a plain admin (GET /api/sheds), so
+    // the shed checkboxes below only ever offer what this admin actually
+    // holds — "distribute" a slice of their own access, nothing more.
     void api.get<{ sheds: Shed[] }>('/sheds').then((r) => setSheds(r.sheds));
   }
   useEffect(refresh, []);
@@ -146,15 +156,19 @@ function UsersInner() {
   async function add(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    setAddError('');
     try {
       const salt = generateSaltB64();
       const derivedKey = await deriveKeyB64(password, salt);
-      await api.post('/admin/users', { phone, name, role, lang, salt, derivedKey, shedIds: [...shedIds] });
+      const effectiveRole = isSuperAdmin ? role : 'operator';
+      await api.post('/admin/users', { phone, name, role: effectiveRole, lang, salt, derivedKey, shedIds: [...shedIds] });
       setPhone('');
       setName('');
       setPassword('');
       setShedIds(new Set());
       refresh();
+    } catch (err) {
+      setAddError(err instanceof ApiError ? err.message : t('admin.users.saveError'));
     } finally {
       setBusy(false);
     }
@@ -162,9 +176,12 @@ function UsersInner() {
 
   return (
     <div>
-      <h1 className="screen-title" style={{ marginBottom: 20 }}>
+      <h1 className="screen-title" style={{ marginBottom: 6 }}>
         {t('admin.users.title')}
       </h1>
+      <p className="meta" style={{ marginBottom: 20 }}>
+        {isSuperAdmin ? t('admin.users.hintOwner') : t('admin.users.hintAdmin')}
+      </p>
 
       {/* One field per row: on a 360px phone, side-by-side fixed-width
           fields just push each other off the edge of the screen. */}
@@ -181,14 +198,23 @@ function UsersInner() {
         </div>
 
         <div className="field-pair">
-          <div>
-            <label className="field-label">{t('admin.users.roleLabel')}</label>
-            <select className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-              <option value="operator">{t('admin.users.roleOperator')}</option>
-              <option value="admin">{t('admin.users.roleAdmin')}</option>
-              <option value="super_admin">{t('admin.users.roleSuperAdmin')}</option>
-            </select>
-          </div>
+          {isSuperAdmin ? (
+            <div>
+              <label className="field-label">{t('admin.users.roleLabel')}</label>
+              <select className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}>
+                <option value="operator">{t('admin.users.roleOperator')}</option>
+                <option value="admin">{t('admin.users.roleAdmin')}</option>
+                <option value="super_admin">{t('admin.users.roleSuperAdmin')}</option>
+              </select>
+            </div>
+          ) : (
+            <div>
+              <label className="field-label">{t('admin.users.roleLabel')}</label>
+              <div className="input" style={{ color: 'var(--steel)' }}>
+                {t('admin.users.roleOperator')}
+              </div>
+            </div>
+          )}
           <div>
             <label className="field-label">{t('settings.languageLabel')}</label>
             <select className="input" value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
@@ -210,7 +236,11 @@ function UsersInner() {
           />
         </div>
 
-        {isShedScoped(role) && <ShedCheckboxes sheds={sheds} selected={shedIds} onChange={setShedIds} />}
+        {isShedScoped(isSuperAdmin ? role : 'operator') && (
+          <ShedCheckboxes sheds={sheds} selected={shedIds} onChange={setShedIds} />
+        )}
+
+        {addError && <p style={{ color: 'var(--fault)', margin: 0 }}>{addError}</p>}
 
         <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
           {t('admin.users.addUser')}
@@ -222,14 +252,15 @@ function UsersInner() {
           <UserRow key={u.phone} u={u} sheds={sheds} onChanged={refresh} />
         ))}
       </ul>
+      {users.length === 0 && <p className="meta" style={{ marginTop: 12 }}>{t('admin.users.empty')}</p>}
     </div>
   );
 }
 
 export function Users() {
   return (
-    <RequireSuperAdmin>
+    <RequireAdmin>
       <UsersInner />
-    </RequireSuperAdmin>
+    </RequireAdmin>
   );
 }
