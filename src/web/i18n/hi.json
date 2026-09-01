@@ -50,7 +50,11 @@
     "greeting": "नमस्ते, {{name}}",
     "myLogsTitle": "मेरे लॉग",
     "viewAll": "सब देखें",
-    "chooseShedTitle": "रिकॉर्ड करने के लिए शेड चुनें"
+    "chooseShedTitle": "रिकॉर्ड करने के लिए शेड चुनें",
+    "searchPlaceholder": "मशीन नंबर या शेड खोजें",
+    "searchNoMatch": "\"{{query}}\" से कोई मशीन या शेड नहीं मिला",
+    "shedStatsMachines": "{{code}} में आपने जितनी मशीनों पर काम किया: {{count}}",
+    "shedStatsLogs": "इस शेड में आपके द्वारा {{count}} लॉग दर्ज किए गए"
   },
   "machine": {
     "pickShedTitle": "शेड चुनें",
@@ -125,7 +129,12 @@
       "modelLabel": "मॉडल",
       "loomTypeLabel": "लूम टाइप",
       "shedviewIdLabel": "ShedView ID",
-      "installedOnLabel": "लगाने की तारीख"
+      "installedOnLabel": "लगाने की तारीख",
+      "hint": "गलत बैच में जुड़ी मशीन ठीक करने के लिए नंबर बदलें या दूसरे शेड में भेजें। मशीन हटाने से उसके सभी लॉग हमेशा के लिए चले जाते हैं।",
+      "readOnlyHint": "नंबर पर टैप करके ऑन-ऑफ करें। मशीन जोड़ना, नंबर बदलना, दूसरे शेड में भेजना या हटाना सिर्फ ओनर अकाउंट कर सकता है।",
+      "edit": "बदलें",
+      "deleteMachine": "मशीन हटाएं",
+      "deleteConfirm": "मशीन \"{{machineNo}}\" और उसके सभी लॉग हमेशा के लिए हटाएं? यह वापस नहीं हो सकता।"
     },
     "users": {
       "title": "यूज़र",
@@ -218,5 +227,10 @@
     "genericError": "कुछ गड़बड़ हो गई। फिर कोशिश करें।",
     "notFound": "नहीं मिला।",
     "unauthorized": "कृपया फिर से लॉग इन करें।"
+  },
+  "machineHistory": {
+    "rangeLabel": "पिछले {{days}} दिन, जिसने भी काम किया",
+    "empty": "पिछले {{days}} दिनों में इस मशीन पर कोई मेंटेनेंस दर्ज नहीं है।",
+    "recordButton": "नया मेंटेनेंस लॉग दर्ज करें"
   }
 }

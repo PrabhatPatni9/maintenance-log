@@ -6,6 +6,7 @@ import { Index } from './routes/Index';
 import { LanguagePicker } from './routes/LanguagePicker';
 import { Login } from './routes/Login';
 import { MachinePicker } from './routes/MachinePicker';
+import { MachineHistory } from './routes/MachineHistory';
 import { Record } from './routes/Record';
 import { LogDetail } from './routes/LogDetail';
 import { Settings } from './routes/Settings';
@@ -46,6 +47,7 @@ const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', com
 const languageRoute = createRoute({ getParentRoute: () => rootRoute, path: '/language', component: LanguagePicker });
 const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: '/login', component: Login });
 const machineRoute = createRoute({ getParentRoute: () => rootRoute, path: '/machine', component: MachinePicker });
+const machineHistoryRoute = createRoute({ getParentRoute: () => rootRoute, path: '/machine/$machineId', component: MachineHistory });
 const recordRoute = createRoute({ getParentRoute: () => rootRoute, path: '/record/$machineId', component: Record });
 const logDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/logs/$logId', component: LogDetail });
 const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: Settings });
@@ -70,6 +72,7 @@ const routeTree = rootRoute.addChildren([
   languageRoute,
   loginRoute,
   machineRoute,
+  machineHistoryRoute,
   recordRoute,
   logDetailRoute,
   settingsRoute,

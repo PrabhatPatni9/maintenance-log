@@ -388,6 +388,44 @@ a:focus-visible {
   background: var(--panel);
 }
 
+/* Machine history: same column-shell pattern as the capture screen — a
+   scrolling body with a footer pinned to the bottom that is never pushed
+   off by a long history, since "Record a new maintenance log" has to stay
+   reachable in one tap the whole time the operator is reading. */
+.machine-history-screen {
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.machine-history-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.machine-history-foot {
+  flex: none;
+  padding: 12px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.history-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--base);
+  border: 1px solid var(--line);
+  font-size: 14px;
+}
+
 /* Stop is the one control on this screen, so it looks like it. */
 .btn-stop {
   min-height: 68px;
@@ -455,6 +493,35 @@ a:focus-visible {
   color: var(--steel);
   background: var(--base);
   border-style: dashed;
+}
+
+/* Wrapping the tile in a div (to carry the super-admin edit badge) takes it
+   out of being a grid item itself, so the width the grid used to stretch
+   onto the button directly has to be restated on the wrapper's child. */
+.machine-tile-wrap {
+  position: relative;
+}
+
+.machine-tile-wrap .machine-tile {
+  width: 100%;
+}
+
+.machine-edit-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--panel);
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Shed identity, reused wherever a shed is named. Reads as a stencilled

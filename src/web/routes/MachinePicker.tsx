@@ -118,7 +118,7 @@ function MachinePickerInner() {
           <button
             key={m.id}
             className="machine-tile"
-            onClick={() => void navigate({ to: '/record/$machineId', params: { machineId: m.id } })}
+            onClick={() => void navigate({ to: '/machine/$machineId', params: { machineId: m.id } })}
           >
             {m.machineNo}
           </button>

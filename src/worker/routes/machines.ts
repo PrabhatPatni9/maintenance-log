@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
-import { requireAdmin, requireAuth } from '../lib/middleware';
-import { mapMachine } from '../lib/mappers';
+import { requireAdmin, requireAuth, requireSuperAdmin } from '../lib/middleware';
+import { mapMachine, mapItem } from '../lib/mappers';
 import { buildSetClause } from '../lib/sql-update';
 import { accessibleShedIds, canAccessShed } from '../lib/shed-access';
 import { uuidv7 } from '@shared/id';
@@ -49,7 +49,12 @@ machineRoutes.get('/', async (c) => {
   return c.json({ machines: results.map(mapMachine) });
 });
 
-machineRoutes.post('/', requireAdmin, async (c) => {
+// Adding, renaming, moving or deleting a machine is owner-tier only. A
+// shed-scoped admin creating the wrong count in the wrong shed (56 looms
+// meant to be split across Shed A and Shed B, added to Shed A whole) is
+// exactly the mistake this restricts: only activate/deactivate is left at
+// the admin tier, and that can never change how many machine rows exist.
+machineRoutes.post('/', requireSuperAdmin, async (c) => {
   const body = await c.req.json<{
     shedId: string;
     machineNo: string;
@@ -61,11 +66,6 @@ machineRoutes.post('/', requireAdmin, async (c) => {
   }>();
   if (!body.shedId || !body.machineNo) {
     return c.json({ error: 'shedId and machineNo required' }, 400);
-  }
-  // requireAdmin now also passes a shed-scoped admin, not just the owner
-  // tier, so this can no longer assume the caller may touch any shed.
-  if (!(await canAccessShed(c.env.DB, c.get('session'), body.shedId))) {
-    return c.json({ error: 'forbidden' }, 403);
   }
 
   const id = uuidv7();
@@ -112,7 +112,7 @@ function expandRange(spec: string): string[] {
   return out;
 }
 
-machineRoutes.post('/bulk', requireAdmin, async (c) => {
+machineRoutes.post('/bulk', requireSuperAdmin, async (c) => {
   const body = await c.req.json<{
     shedId: string;
     range: string;
@@ -120,9 +120,6 @@ machineRoutes.post('/bulk', requireAdmin, async (c) => {
     make?: string;
   }>();
   if (!body.shedId || !body.range) return c.json({ error: 'shedId and range required' }, 400);
-  if (!(await canAccessShed(c.env.DB, c.get('session'), body.shedId))) {
-    return c.json({ error: 'forbidden' }, 403);
-  }
 
   const numbers = expandRange(body.range);
   if (numbers.length === 0) return c.json({ error: 'no machine numbers in range' }, 400);
@@ -140,10 +137,17 @@ machineRoutes.post('/bulk', requireAdmin, async (c) => {
   return c.json({ created: numbers.length });
 });
 
+/**
+ * A shed-scoped admin may only flip `active`. Renaming a machine number or
+ * moving it to a different shed — the actual fix for "56 machines added to
+ * the wrong shed" — is owner-tier only, same reasoning as POST/bulk above.
+ */
 machineRoutes.patch('/:id', requireAdmin, async (c) => {
   const id = c.req.param('id');
+  const session = c.get('session');
   const body = await c.req.json<Partial<{
     machineNo: string;
+    shedId: string;
     make: string;
     model: string;
     loomType: string;
@@ -156,12 +160,28 @@ machineRoutes.patch('/:id', requireAdmin, async (c) => {
     .bind(id)
     .first<{ shed_id: string }>();
   if (!existing) return c.json({ error: 'not found' }, 404);
-  if (!(await canAccessShed(c.env.DB, c.get('session'), existing.shed_id))) {
+  if (!(await canAccessShed(c.env.DB, session, existing.shed_id))) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
+
+  const editingFields =
+    body.machineNo !== undefined ||
+    body.shedId !== undefined ||
+    body.make !== undefined ||
+    body.model !== undefined ||
+    body.loomType !== undefined ||
+    body.shedviewId !== undefined ||
+    body.installedOn !== undefined;
+  if (editingFields && session.role !== 'super_admin') {
+    return c.json({ error: 'forbidden' }, 403);
+  }
+  if (body.shedId !== undefined && !(await canAccessShed(c.env.DB, session, body.shedId))) {
     return c.json({ error: 'forbidden' }, 403);
   }
 
   const { setClause, binds } = buildSetClause({
     machine_no: body.machineNo,
+    shed_id: body.shedId,
     make: body.make,
     model: body.model,
     loom_type: body.loomType,
@@ -181,4 +201,116 @@ machineRoutes.patch('/:id', requireAdmin, async (c) => {
     .first<Record<string, unknown>>();
   if (!row) return c.json({ error: 'not found' }, 404);
   return c.json({ machine: mapMachine(row) });
+});
+
+/**
+ * Owner tier only, and genuinely destructive: the machine, every log under
+ * it, and everything those logs carry are gone, not deactivated. Mirrors
+ * shedRoutes.delete('/:id') — same audit-then-cascade pattern, best-effort
+ * R2 cleanup after the DB commit. This is the other half of correcting a
+ * batch-add mistake: rename/move fixes a machine that should exist under a
+ * different number or shed, this removes one that should never have been
+ * created at all.
+ */
+machineRoutes.delete('/:id', requireSuperAdmin, async (c) => {
+  const id = c.req.param('id');
+  const session = c.get('session');
+
+  const machine = await c.env.DB.prepare('SELECT * FROM machines WHERE id = ?')
+    .bind(id)
+    .first<Record<string, unknown>>();
+  if (!machine) return c.json({ error: 'not found' }, 404);
+
+  const [{ results: audioRows }, logCountRow] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT ls.audio_key FROM log_segments ls
+       JOIN logs l ON l.id = ls.log_id
+       WHERE l.machine_id = ? AND ls.audio_key IS NOT NULL`,
+    )
+      .bind(id)
+      .all<{ audio_key: string }>(),
+    c.env.DB.prepare('SELECT COUNT(*) AS n FROM logs WHERE machine_id = ?').bind(id).first<{ n: number }>(),
+  ]);
+  const logCount = logCountRow?.n ?? 0;
+
+  await c.env.DB.batch([
+    c.env.DB.prepare('DELETE FROM logs WHERE machine_id = ?').bind(id),
+    c.env.DB.prepare('DELETE FROM machines WHERE id = ?').bind(id),
+    c.env.DB.prepare(
+      `INSERT INTO admin_audit (id, actor_phone, action, target_type, target_id, detail, created_at)
+       VALUES (?, ?, 'delete_machine', 'machine', ?, ?, ?)`,
+    ).bind(
+      uuidv7(),
+      session.phone,
+      id,
+      JSON.stringify({ machineNo: machine.machine_no, shedId: machine.shed_id, logCount }),
+      Date.now(),
+    ),
+  ]);
+
+  await Promise.all(audioRows.map((r) => c.env.AUDIO.delete(r.audio_key).catch(() => {})));
+
+  return c.json({ ok: true, deleted: { logs: logCount } });
+});
+
+/**
+ * Full history for one machine, whoever recorded it — the operator picks a
+ * shed, picks a machine, and sees everything done to it regardless of which
+ * of their colleagues logged it (this is the point: a maintenance record
+ * that belongs to the loom, not to whoever happened to be holding the
+ * phone). Same shed-scoping as everywhere else, but open to any role —
+ * unlike /api/admin/history this is not an admin screen.
+ */
+machineRoutes.get('/:id/history', async (c) => {
+  const id = c.req.param('id');
+  const session = c.get('session');
+  const days = Math.max(1, Math.min(365, Number(c.req.query('days') ?? 14)));
+
+  const machine = await c.env.DB.prepare('SELECT * FROM machines WHERE id = ?')
+    .bind(id)
+    .first<Record<string, unknown>>();
+  if (!machine) return c.json({ error: 'not found' }, 404);
+  if (!(await canAccessShed(c.env.DB, session, machine.shed_id as string))) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
+
+  const since = Date.now() - days * 24 * 60 * 60 * 1000;
+  const { results: logRows } = await c.env.DB.prepare(
+    `SELECT l.*, u.name AS operator_name
+     FROM logs l
+     JOIN users u ON u.phone = l.operator_phone
+     WHERE l.machine_id = ? AND l.status = 'approved' AND l.deleted_at IS NULL AND l.client_created_at >= ?
+     ORDER BY l.client_created_at DESC`,
+  )
+    .bind(id, since)
+    .all<Record<string, unknown>>();
+
+  const logIds = logRows.map((r) => r.id as string);
+  const itemsByLog = new Map<string, ReturnType<typeof mapItem>[]>();
+  if (logIds.length > 0) {
+    const placeholders = logIds.map(() => '?').join(',');
+    const { results: itemRows } = await c.env.DB.prepare(
+      `SELECT * FROM log_items WHERE log_id IN (${placeholders})`,
+    )
+      .bind(...logIds)
+      .all<Record<string, unknown>>();
+    for (const r of itemRows) {
+      const item = mapItem(r);
+      const list = itemsByLog.get(item.logId) ?? [];
+      list.push(item);
+      itemsByLog.set(item.logId, list);
+    }
+  }
+
+  const logs = logRows.map((r) => ({
+    id: r.id as string,
+    operatorPhone: r.operator_phone as string,
+    operatorName: (r.operator_name as string) ?? (r.operator_phone as string),
+    clientCreatedAt: r.client_created_at as number,
+    transcript: (r.transcript as string) ?? null,
+    typedNote: (r.typed_note as string) ?? null,
+    items: itemsByLog.get(r.id as string) ?? [],
+  }));
+
+  return c.json({ machine: mapMachine(machine), days, logs });
 });

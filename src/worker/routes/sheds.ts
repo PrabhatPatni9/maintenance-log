@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
 import { requireSuperAdmin, requireAuth } from '../lib/middleware';
 import { mapShed } from '../lib/mappers';
-import { accessibleShedIds } from '../lib/shed-access';
+import { accessibleShedIds, canAccessShed } from '../lib/shed-access';
 import { uuidv7 } from '@shared/id';
 
 export const shedRoutes = new Hono<AppEnv>();
@@ -30,6 +30,29 @@ shedRoutes.get('/', async (c) => {
     .bind(...allowed)
     .all<Record<string, unknown>>();
   return c.json({ sheds: results.map(mapShed) });
+});
+
+/** The quick half of "Shed A: how many machines have I worked on" — the
+ * same answer the shed → machine → history click-through gives, just
+ * without the clicking. Scoped to the calling operator's own approved
+ * logs, same as the home screen's "today" list. */
+shedRoutes.get('/:id/stats', async (c) => {
+  const id = c.req.param('id');
+  const session = c.get('session');
+  if (!(await canAccessShed(c.env.DB, session, id))) {
+    return c.json({ error: 'forbidden' }, 403);
+  }
+
+  const row = await c.env.DB.prepare(
+    `SELECT COUNT(DISTINCT machine_id) AS machines, COUNT(*) AS logs
+     FROM logs
+     WHERE operator_phone = ? AND status = 'approved' AND deleted_at IS NULL
+       AND machine_id IN (SELECT id FROM machines WHERE shed_id = ?)`,
+  )
+    .bind(session.phone, id)
+    .first<{ machines: number; logs: number }>();
+
+  return c.json({ machinesWorkedOn: row?.machines ?? 0, logCount: row?.logs ?? 0 });
 });
 
 shedRoutes.post('/', requireSuperAdmin, async (c) => {

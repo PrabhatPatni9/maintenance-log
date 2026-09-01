@@ -50,7 +50,11 @@
     "greeting": "Hello, {{name}}",
     "myLogsTitle": "My logs",
     "viewAll": "View all",
-    "chooseShedTitle": "Choose a shed to record"
+    "chooseShedTitle": "Choose a shed to record",
+    "searchPlaceholder": "Search machine number or shed",
+    "searchNoMatch": "No machine or shed matches \"{{query}}\"",
+    "shedStatsMachines": "Machines you've worked on in {{code}}: {{count}}",
+    "shedStatsLogs": "{{count}} logs filed by you in this shed"
   },
   "machine": {
     "pickShedTitle": "Choose a shed",
@@ -125,7 +129,12 @@
       "modelLabel": "Model",
       "loomTypeLabel": "Loom type",
       "shedviewIdLabel": "ShedView ID",
-      "installedOnLabel": "Installed on"
+      "installedOnLabel": "Installed on",
+      "hint": "Rename or move a machine to fix a bad batch add. Deleting one removes every log under it, for good.",
+      "readOnlyHint": "Tap a number to switch it on or off. Only the owner account can add, rename, move, or delete a machine.",
+      "edit": "Edit",
+      "deleteMachine": "Delete machine",
+      "deleteConfirm": "Permanently delete machine \"{{machineNo}}\" and every log under it? This cannot be undone."
     },
     "users": {
       "title": "Users",
@@ -218,5 +227,10 @@
     "genericError": "Something went wrong. Please try again.",
     "notFound": "Not found.",
     "unauthorized": "Please log in again."
+  },
+  "machineHistory": {
+    "rangeLabel": "Last {{days}} days, everyone who worked on it",
+    "empty": "No maintenance logged on this machine in the last {{days}} days.",
+    "recordButton": "Record a new maintenance log"
   }
 }

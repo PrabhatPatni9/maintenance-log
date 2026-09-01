@@ -118,6 +118,34 @@ export interface LogEditRecord {
   editedAt: number;
 }
 
+/** One machine's maintenance history, whoever recorded each entry — the
+ * shed-pick-then-machine-pick-then-see-everything flow (CLAUDE.md-adjacent:
+ * the record belongs to the loom, not to whichever operator was holding the
+ * phone that day). Returned by GET /api/machines/:id/history. */
+export interface MachineHistoryEntry {
+  id: string;
+  operatorPhone: string;
+  operatorName: string;
+  clientCreatedAt: number;
+  transcript: string | null;
+  typedNote: string | null;
+  items: LogItemRecord[];
+}
+
+export interface MachineHistoryResponse {
+  machine: Machine;
+  days: number;
+  logs: MachineHistoryEntry[];
+}
+
+/** An operator's own footprint in one shed — "Shed A: how many machines have
+ * I worked on" — the quick answer a search hands back without walking the
+ * shed → machine → history flow by hand. Returned by GET /api/sheds/:id/stats. */
+export interface ShedStats {
+  machinesWorkedOn: number;
+  logCount: number;
+}
+
 export interface LogDetail extends LogRecord {
   machineNo: string;
   shedCode: string;
