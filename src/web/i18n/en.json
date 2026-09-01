@@ -118,7 +118,9 @@
       "readOnlyHint": "Machines inside these sheds are yours to manage. Only the owner account can add, switch off, or remove a shed itself.",
       "empty": "No sheds yet. Add the first one above.",
       "deleteShed": "Delete",
-      "deleteConfirm": "Permanently delete \"{{name}}\" and every machine and log under it? This cannot be undone."
+      "deleteConfirm": "Permanently delete \"{{name}}\" and every machine and log under it? This cannot be undone.",
+      "edit": "Edit",
+      "saveError": "Could not save. Try again."
     },
     "machines": {
       "title": "Machines",

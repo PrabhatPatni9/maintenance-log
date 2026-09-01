@@ -55,25 +55,57 @@ shedRoutes.get('/:id/stats', async (c) => {
   return c.json({ machinesWorkedOn: row?.machines ?? 0, logCount: row?.logs ?? 0 });
 });
 
+function isUniqueViolation(err: unknown): boolean {
+  return err instanceof Error && err.message.includes('UNIQUE constraint failed');
+}
+
 shedRoutes.post('/', requireSuperAdmin, async (c) => {
   const { code, name } = await c.req.json<{ code: string; name: string }>();
   if (!code || !name) return c.json({ error: 'code and name required' }, 400);
 
   const id = uuidv7();
   const now = Date.now();
-  await c.env.DB.prepare(
-    'INSERT INTO sheds (id, code, name, active, created_at) VALUES (?, ?, ?, 1, ?)',
-  )
-    .bind(id, code, name, now)
-    .run();
+  try {
+    await c.env.DB.prepare(
+      'INSERT INTO sheds (id, code, name, active, created_at) VALUES (?, ?, ?, 1, ?)',
+    )
+      .bind(id, code, name, now)
+      .run();
+  } catch (err) {
+    if (isUniqueViolation(err)) return c.json({ error: 'that code is already in use' }, 409);
+    throw err;
+  }
 
   return c.json({ shed: { id, code, name, active: true, createdAt: now } }, 201);
 });
 
+/**
+ * Code and name are both editable, not just name — a supervisor mis-typing
+ * a shed code at setup time (or wanting to rename it as the floor's own
+ * labelling changes) previously had no way to fix it short of delete and
+ * recreate, which would have orphaned every machine and log under it.
+ *
+ * Renaming the code does not touch R2: audio keys already written
+ * (`audio/{shed_code}/...`, CLAUDE.md section 12) keep whatever code was
+ * current at upload time. That is a cosmetic mismatch in old keys, not a
+ * correctness problem — `audio_key` is stored per segment and never
+ * regenerated, so nothing breaks, but do not "fix" it by trying to rename
+ * existing R2 objects to match.
+ */
 shedRoutes.patch('/:id', requireSuperAdmin, async (c) => {
   const id = c.req.param('id');
-  const body = await c.req.json<{ name?: string; active?: boolean }>();
+  const body = await c.req.json<{ code?: string; name?: string; active?: boolean }>();
 
+  if (body.code !== undefined) {
+    const code = body.code.trim();
+    if (!code) return c.json({ error: 'code cannot be empty' }, 400);
+    try {
+      await c.env.DB.prepare('UPDATE sheds SET code = ? WHERE id = ?').bind(code, id).run();
+    } catch (err) {
+      if (isUniqueViolation(err)) return c.json({ error: 'that code is already in use' }, 409);
+      throw err;
+    }
+  }
   if (body.name !== undefined) {
     await c.env.DB.prepare('UPDATE sheds SET name = ? WHERE id = ?').bind(body.name, id).run();
   }
