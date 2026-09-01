@@ -40,7 +40,7 @@ export function Taxonomy() {
         {t('admin.taxonomy.title')}
       </h1>
 
-      <form onSubmit={add} className="panel" style={{ padding: 16, marginBottom: 24, display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+      <form onSubmit={add} className="panel" style={{ padding: 16, marginBottom: 24, display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
         <input className="input" placeholder={t('admin.taxonomy.codeLabel')} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} required style={{ textAlign: 'left' }} />
         <select className="input" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as 'action' | 'part' })}>
           <option value="action">{t('admin.taxonomy.kindAction')}</option>
@@ -52,11 +52,11 @@ export function Taxonomy() {
         <input className="input" placeholder="मराठी" value={form.labelMr} onChange={(e) => setForm({ ...form, labelMr: e.target.value })} required style={{ textAlign: 'left' }} />
         <input className="input" placeholder={t('admin.taxonomy.unitLabel')} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} style={{ textAlign: 'left' }} />
         <input
-          className="btn"
+          className="input"
           placeholder={t('admin.taxonomy.synonymsLabel')}
           value={form.synonyms}
           onChange={(e) => setForm({ ...form, synonyms: e.target.value })}
-          style={{ textAlign: 'left', gridColumn: '1 / -1' }}
+          style={{ gridColumn: '1 / -1' }}
         />
         <p className="meta" style={{ gridColumn: '1 / -1' }}>
           {t('admin.taxonomy.synonymsHint')}
@@ -66,20 +66,19 @@ export function Taxonomy() {
         </button>
       </form>
 
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+      <ul className="stack-list">
         {items.map((item) => (
-          <li key={item.code} className="panel" style={{ padding: 12, marginBottom: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>
-                <strong>{item.code}</strong> · {item.labelEn} / {item.labelHi} / {item.labelMr} · {item.category}
-              </span>
-              <button className="btn" onClick={() => void toggleActive(item)}>
-                {t(item.active ? 'common.deactivate' : 'common.activate')}
-              </button>
+          <li key={item.code} className={`panel${item.active ? '' : ' is-off'}`} style={{ padding: 12 }}>
+            <div style={{ fontWeight: 600 }}>
+              {item.labelEn} <span className="meta">/ {item.labelHi} / {item.labelMr}</span>
             </div>
-            <p className="meta" style={{ marginTop: 4 }}>
-              {item.synonyms.join(', ')}
+            <p className="meta" style={{ marginTop: 2 }}>
+              {item.code} · {item.category}
+              {item.synonyms.length > 0 && ` · ${item.synonyms.join(', ')}`}
             </p>
+            <button className="btn btn-small" style={{ marginTop: 8 }} onClick={() => void toggleActive(item)}>
+              {t(item.active ? 'common.deactivate' : 'common.activate')}
+            </button>
           </li>
         ))}
       </ul>

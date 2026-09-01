@@ -15,26 +15,22 @@ function AdminShellInner() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto' }}>
-      <nav style={{ display: 'flex', gap: 4, overflowX: 'auto', borderBottom: '1px solid var(--line)', padding: '0 12px' }}>
+    <div style={{ maxWidth: 960, margin: '0 auto', width: '100%' }}>
+      <nav className="admin-nav">
         {TABS.map((tab) => (
           <Link
             key={tab.to}
             to={tab.to}
-            style={{
-              padding: '14px 12px',
-              whiteSpace: 'nowrap',
-              textDecoration: 'none',
-              color: pathname.startsWith(tab.to) ? 'var(--ink)' : 'var(--steel)',
-              borderBottom: pathname.startsWith(tab.to) ? '2px solid var(--amber)' : '2px solid transparent',
-              fontWeight: 500,
-            }}
+            className={`admin-nav-item${pathname.startsWith(tab.to) ? ' is-active' : ''}`}
           >
             {t(tab.key)}
           </Link>
         ))}
       </nav>
-      <div style={{ padding: 20 }}>
+      {/* Every admin form below wraps or stacks instead of forcing a fixed
+          width, but this is the backstop: nothing in here should ever be
+          able to force the phone viewport itself to scroll sideways. */}
+      <div className="admin-body">
         <Outlet />
       </div>
     </div>

@@ -549,6 +549,119 @@ a:focus-visible {
   text-decoration: none;
 }
 
+/* --- Admin: phone-first --------------------------------------------- */
+
+.admin-nav {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 1px solid var(--line);
+  padding: 0 8px;
+}
+
+.admin-nav-item {
+  flex: none;
+  padding: 14px 14px;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--steel);
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.admin-nav-item.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--amber);
+}
+
+.admin-body {
+  padding: 16px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* One field per row on a phone; side by side once there is room for it. */
+.stacked-form {
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 480px) {
+  .field-pair {
+    flex-direction: row;
+  }
+  .field-pair > * {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.shed-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* The whole row is the tap target, not just the checkbox — a bare checkbox
+   is a small, fiddly hit area on a phone. */
+.shed-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.shed-check-row.is-checked {
+  border-color: var(--ink);
+  background: var(--base);
+}
+
+.shed-check-row input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.user-row {
+  padding: 12px 14px;
+}
+
+.user-row.is-off {
+  background: var(--base);
+  color: var(--steel);
+}
+
+.user-row-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-row-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.panel.is-off {
+  background: var(--base);
+  color: var(--steel);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;

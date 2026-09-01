@@ -5,13 +5,19 @@
  * specific, documented way this API misbehaves on the phones this app
  * actually runs on. Read the comments before changing anything.
  *
- * The single most important line in this file is `continuous = false`.
- * Continuous recognition is broken on Android (crbug 40324711): the mic
- * cuts out within a couple of seconds and results either never arrive or
- * arrive once and then stop forever. The documented-reliable pattern, and
- * the one used here, is single-shot recognition restarted from `onend`
- * for as long as the operator is still recording. Setting this back to
- * `true` ships a recorder that produces no transcript on Android.
+ * `continuous = true`, with a restart-on-`onend` loop running underneath it
+ * regardless. Chrome plays an audible chime every time a recognition session
+ * starts — that is a deliberate, non-suppressible browser privacy signal (it
+ * exists so a page cannot silently listen), not a bug, and no web API turns
+ * it off. `continuous = false` forces a new session after essentially every
+ * phrase, which chimes on every restart — audibly, every couple of seconds,
+ * for the whole recording. `continuous = true` is what actually asks the
+ * browser for one long session, so on any device where it behaves (which is
+ * most of them; crbug 40324711 was specific builds cutting it short after a
+ * couple of seconds) capture runs the whole 45–50s on one chime instead of
+ * a dozen. The onend-triggered restart loop stays exactly as it was, so a
+ * device that still cuts continuous mode short falls back to the same
+ * frequent-restart behaviour as before rather than going silent.
  */
 
 export type Lang = 'en' | 'hi' | 'mr';
@@ -98,12 +104,21 @@ export function startRecognition(
   function buildSession(): any {
     const r = new (Ctor as any)();
     r.lang = BCP47[lang];
-    // See the file header: never set this to true. Android breaks.
-    r.continuous = false;
+    // See the file header: one long session where the device allows it,
+    // fewer chimes than restarting after every phrase.
+    r.continuous = true;
     r.interimResults = true;
     r.maxAlternatives = 1;
 
     r.onresult = (e: any) => {
+      // A session that has been stopped (Stop pressed, or superseded by a
+      // language switch) can still fire one last onresult while it winds
+      // down. Without this guard that late event writes into the SAME
+      // shared callbacks the new session already started reporting to,
+      // overwriting whatever the new session had already recognised —
+      // which read as the transcript "deleting itself" right after a
+      // language switch. Once stopped, a session is not allowed to speak.
+      if (stopped) return;
       failures = 0;
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -124,6 +139,10 @@ export function startRecognition(
     };
 
     r.onerror = (e: any) => {
+      // Same reasoning as onresult above: a stopped/superseded session's
+      // error is not this recording's problem any more.
+      if (stopped) return;
+
       // `no-speech` fires whenever the operator pauses. Expected, and on
       // Android it also ends the session — onend restarts us. Not an error.
       if (e.error === 'no-speech') return;

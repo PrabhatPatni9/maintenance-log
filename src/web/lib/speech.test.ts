@@ -101,10 +101,14 @@ function cbs() {
 }
 
 describe('startRecognition on Android-style single-shot recognition', () => {
-  it('never asks for continuous mode, which is broken on Android', () => {
+  it('asks for one continuous session, not a fresh one per phrase', () => {
+    // continuous=false forces a new session (and Chrome's non-suppressible
+    // start chime) after almost every phrase. continuous=true asks for the
+    // long session that avoids that on any device where it actually works;
+    // the restart loop below is what covers the devices where it does not.
     const c = cbs();
     startRecognition('en', c.handlers);
-    expect(MockSpeechRecognition.instances[0]!.continuous).toBe(false);
+    expect(MockSpeechRecognition.instances[0]!.continuous).toBe(true);
     expect(MockSpeechRecognition.instances[0]!.interimResults).toBe(true);
   });
 
@@ -174,6 +178,23 @@ describe('startRecognition on Android-style single-shot recognition', () => {
 
     MockSpeechRecognition.instances[0]!.emit([{ transcript: 'बेल्ट बदला', isFinal: true }]);
     expect(c.finals.at(-1)).toBe('oil change kiya बेल्ट बदला');
+  });
+
+  it('ignores a result that arrives after stop() has already been called', () => {
+    // A session that has been told to stop can still fire one more onresult
+    // while it winds down. Before this guard existed, that late event wrote
+    // into the same shared callbacks a newly-launched session (e.g. after a
+    // language switch) had already started reporting to — which read as the
+    // transcript "deleting itself" right after switching language.
+    const c = cbs();
+    const handle = startRecognition('en', c.handlers);
+    const first = MockSpeechRecognition.instances[0]!;
+
+    first.emit([{ transcript: 'oil change kiya', isFinal: true }]);
+    handle.stop();
+    first.emit([{ transcript: 'oil change kiya extra', isFinal: true }]);
+
+    expect(c.finals).toEqual(['oil change kiya']);
   });
 
   it('reports unavailable when the browser has no engine at all', () => {

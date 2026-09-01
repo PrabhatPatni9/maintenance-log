@@ -7,6 +7,11 @@ import { pingStart, pingWarning, pingEnd } from './sound';
 /** The UI counts down from 45s; warn with five left. */
 const WARN_AT_MS = 40_000;
 
+/** Same reasoning as speech.ts's own restart delay: starting a new
+ * recognition session immediately after stopping another can find the mic
+ * still held by the one winding down. */
+const LANG_SWITCH_DELAY_MS = 250;
+
 export interface SegmentResult {
   blob: Blob;
   durationMs: number;
@@ -46,6 +51,13 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
   const finalTextRef = useRef('');
   const onHardStopRef = useRef(onHardStop);
   onHardStopRef.current = onHardStop;
+  // Bumped on every start/switch/stop. speech.ts already refuses to report
+  // from a session after its own stop() is called, but a language switch
+  // also has a delay before the *next* session launches (below) — this
+  // stops a launch that was queued and then superseded (a second switch, or
+  // Stop, arriving before the delay elapses) from writing state that no
+  // longer belongs to the current recording.
+  const epochRef = useRef(0);
 
   const tick = useCallback(() => {
     const elapsed = performance.now() - startedAtRef.current;
@@ -61,20 +73,27 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     rafRef.current = requestAnimationFrame(tick);
   }, []);
 
-  const launchRecognition = useCallback((useLang: Lang, carryOver: string) => {
+  const launchRecognition = useCallback((useLang: Lang, carryOver: string, epoch: number) => {
     activeLangRef.current = useLang;
     speechRef.current = startRecognition(
       useLang,
       {
-        onInterim: setInterimText,
+        onInterim: (text) => {
+          if (epochRef.current !== epoch) return;
+          setInterimText(text);
+        },
         onFinal: (text) => {
+          if (epochRef.current !== epoch) return;
           finalTextRef.current = text;
           setFinalText(text);
         },
         onUnavailable: () => {
           /* silent fallthrough — the operator can still type it in review */
         },
-        onPermissionDenied: () => setPermissionDenied(true),
+        onPermissionDenied: () => {
+          if (epochRef.current !== epoch) return;
+          setPermissionDenied(true);
+        },
       },
       carryOver,
     );
@@ -102,7 +121,8 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     const sttMode = await getSttMode();
     if (sttMode === 'local_only' || !isSupported()) return;
 
-    launchRecognition(lang, '');
+    const epoch = ++epochRef.current;
+    launchRecognition(lang, '', epoch);
   }, [lang, tick, launchRecognition]);
 
   /**
@@ -111,14 +131,25 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
    * speaking Hindi into an en-IN session returns romanised Latin text rather
    * than Devanagari. This is how the operator says "I am speaking Marathi
    * now" and gets Marathi script back.
+   *
+   * The already-recognised text is read fresh out of finalTextRef right
+   * before the new session launches (not captured earlier), and the new
+   * session's own callbacks are the only thing allowed to touch shared state
+   * for this epoch — see epochRef above — so nothing already on screen can
+   * be clobbered by this switch.
    */
   const switchLang = useCallback(
     (next: Lang) => {
       if (next === activeLangRef.current) return;
       speechRef.current?.stop();
       speechRef.current = null;
+      activeLangRef.current = next;
       setInterimText('');
-      launchRecognition(next, finalTextRef.current);
+      const epoch = ++epochRef.current;
+      setTimeout(() => {
+        if (epochRef.current !== epoch) return; // superseded before it got to launch
+        launchRecognition(next, finalTextRef.current, epoch);
+      }, LANG_SWITCH_DELAY_MS);
     },
     [launchRecognition],
   );
@@ -127,6 +158,7 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     cancelAnimationFrame(rafRef.current);
     const durationMs = performance.now() - startedAtRef.current;
     setRecording(false);
+    epochRef.current += 1; // invalidate any switchLang() still waiting on its delay
 
     const producedText = speechRef.current?.didProduceText() ?? false;
     speechRef.current?.stop();
