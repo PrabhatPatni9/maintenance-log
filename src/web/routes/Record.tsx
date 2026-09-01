@@ -12,8 +12,28 @@ import { ensureDraftLog, saveSegment, sourceFor, finalizeAndQueue } from '../lib
 import { uuidv7 } from '@shared/id';
 import { CaptureRing, CAPTURE_INNER_MS } from '../components/CaptureRing';
 import { PillList } from '../components/PillList';
+import type { Lang } from '@shared/types';
 
 type Phase = 'capture' | 'review';
+
+const SPEECH_LANGS: { code: Lang; label: string }[] = [
+  { code: 'hi', label: 'हिंदी' },
+  { code: 'mr', label: 'मराठी' },
+  { code: 'en', label: 'English' },
+];
+
+/** Remembered separately from the interface language: plenty of operators
+ * read the app in one language and speak another, and speaking Hindi into an
+ * en-IN session comes back as romanised Latin instead of Devanagari. */
+function storedSpeechLang(fallback: Lang): Lang {
+  try {
+    const saved = localStorage.getItem('speechLang');
+    if (saved === 'en' || saved === 'hi' || saved === 'mr') return saved;
+  } catch {
+    /* private mode or storage disabled — the app language is a fine default */
+  }
+  return fallback;
+}
 
 function RecordInner() {
   const t = useT();
@@ -38,7 +58,18 @@ function RecordInner() {
   // took off.
   const dismissedRef = useRef<Set<string>>(new Set());
 
-  const capture = useCapture(lang, () => void handleStop());
+  const [speechLang, setSpeechLang] = useState<Lang>(() => storedSpeechLang(lang));
+  const capture = useCapture(speechLang, () => void handleStop());
+
+  function chooseSpeechLang(next: Lang) {
+    setSpeechLang(next);
+    try {
+      localStorage.setItem('speechLang', next);
+    } catch {
+      /* not being able to remember it is not worth failing the recording over */
+    }
+    capture.switchLang(next);
+  }
 
   useEffect(() => {
     void db.machines.get(machineId).then((m) => m && setMachine(m));
@@ -108,10 +139,24 @@ function RecordInner() {
     const liveText = [capture.finalText, capture.interimText].filter(Boolean).join(' ');
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--base)' }}>
-        <div style={{ padding: 20, textAlign: 'center' }}>
+        <div style={{ padding: '20px 20px 12px', textAlign: 'center' }}>
           <span className="meta">
             {machine ? `${t('review.machineLabel')} ${machine.machineNo} · ${machine.shedName}` : ''}
           </span>
+        </div>
+        {/* Which language is being spoken, not which one the app is in. One
+            tap, mid-recording safe: the words already recognised carry over. */}
+        <div className="speech-lang-row">
+          {SPEECH_LANGS.map((l) => (
+            <button
+              key={l.code}
+              className={`speech-lang${speechLang === l.code ? ' is-active' : ''}`}
+              onClick={() => chooseSpeechLang(l.code)}
+              lang={l.code}
+            >
+              {l.label}
+            </button>
+          ))}
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
           {capture.permissionDenied ? (

@@ -78,6 +78,9 @@ export async function tryInstallLocal(lang: Lang): Promise<boolean> {
 export function startRecognition(
   lang: Lang,
   cb: SpeechCallbacks,
+  /** Text already recognised before this handle existed. Lets the caller
+   * switch spoken language mid-note without losing what was said so far. */
+  initialText = '',
 ): SpeechHandle {
   const Ctor = getCtor();
   if (!Ctor) {
@@ -87,7 +90,7 @@ export function startRecognition(
 
   let stopped = false;
   let producedText = false;
-  let finalText = '';
+  let finalText = initialText ? initialText.trim() + ' ' : '';
   let failures = 0;
   let rec: any = null;
   let restartTimer: ReturnType<typeof setTimeout> | null = null;

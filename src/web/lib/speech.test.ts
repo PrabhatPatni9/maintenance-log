@@ -165,6 +165,17 @@ describe('startRecognition on Android-style single-shot recognition', () => {
     expect(MockSpeechRecognition.instances).toHaveLength(1);
   });
 
+  it('carries earlier text over when the spoken language is switched', () => {
+    const c = cbs();
+    // Operator spoke English, then switches to Hindi mid-note. The new handle
+    // continues the same sentence instead of starting from nothing.
+    startRecognition('hi', c.handlers, 'oil change kiya');
+    expect(MockSpeechRecognition.instances[0]!.lang).toBe('hi-IN');
+
+    MockSpeechRecognition.instances[0]!.emit([{ transcript: 'बेल्ट बदला', isFinal: true }]);
+    expect(c.finals.at(-1)).toBe('oil change kiya बेल्ट बदला');
+  });
+
   it('reports unavailable when the browser has no engine at all', () => {
     (globalThis as unknown as { window: unknown }).window = {};
     const c = cbs();

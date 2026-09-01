@@ -235,6 +235,31 @@ a:focus-visible {
   font-size: 15px;
 }
 
+/* Spoken-language switch on the capture screen. Small enough that the ring
+   stays the one bold thing, big enough for a thumb. */
+.speech-lang-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 20px;
+}
+
+.speech-lang {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--steel);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.speech-lang.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--panel);
+}
+
 /* Uniform square tiles instead of ragged flex-wrap buttons, so a grid of 24
    machine numbers reads as a grid, not a paragraph of loose chips. */
 .machine-grid {

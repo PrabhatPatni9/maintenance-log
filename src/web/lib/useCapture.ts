@@ -34,6 +34,7 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
   const startedAtRef = useRef(0);
   const rafRef = useRef<number>(0);
   const localInstallRef = useRef(false);
+  const activeLangRef = useRef<Lang>(lang);
   // Authoritative copy. State drives rendering, but stop() reads the ref so a
   // hard stop firing from a stale animation-frame closure still returns every
   // word that was recognised.
@@ -51,6 +52,31 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     rafRef.current = requestAnimationFrame(tick);
   }, []);
 
+  const launchRecognition = useCallback((useLang: Lang, carryOver: string) => {
+    activeLangRef.current = useLang;
+    speechRef.current = startRecognition(
+      useLang,
+      {
+        onInterim: setInterimText,
+        onFinal: (text) => {
+          finalTextRef.current = text;
+          setFinalText(text);
+        },
+        onUnavailable: () => {
+          /* silent fallthrough — the operator can still type it in review */
+        },
+        onPermissionDenied: () => setPermissionDenied(true),
+      },
+      carryOver,
+    );
+
+    // Bonus only, and never on the critical path: this promise does not
+    // reliably settle on every build.
+    void tryInstallLocal(useLang).then((ok) => {
+      localInstallRef.current = ok;
+    });
+  }, []);
+
   const start = useCallback(async () => {
     setInterimText('');
     setFinalText('');
@@ -65,24 +91,26 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     const sttMode = await getSttMode();
     if (sttMode === 'local_only' || !isSupported()) return;
 
-    speechRef.current = startRecognition(lang, {
-      onInterim: setInterimText,
-      onFinal: (text) => {
-        finalTextRef.current = text;
-        setFinalText(text);
-      },
-      onUnavailable: () => {
-        /* silent fallthrough — the operator can still type it in review */
-      },
-      onPermissionDenied: () => setPermissionDenied(true),
-    });
+    launchRecognition(lang, '');
+  }, [lang, tick, launchRecognition]);
 
-    // Bonus only, and never on the critical path: this promise does not
-    // reliably settle on every build.
-    void tryInstallLocal(lang).then((ok) => {
-      localInstallRef.current = ok;
-    });
-  }, [lang, tick]);
+  /**
+   * Switch the language being recognised without losing the note so far.
+   * Web Speech declares one language per session and cannot auto-detect, so
+   * speaking Hindi into an en-IN session returns romanised Latin text rather
+   * than Devanagari. This is how the operator says "I am speaking Marathi
+   * now" and gets Marathi script back.
+   */
+  const switchLang = useCallback(
+    (next: Lang) => {
+      if (next === activeLangRef.current) return;
+      speechRef.current?.stop();
+      speechRef.current = null;
+      setInterimText('');
+      launchRecognition(next, finalTextRef.current);
+    },
+    [launchRecognition],
+  );
 
   const stop = useCallback(async (): Promise<SegmentResult> => {
     cancelAnimationFrame(rafRef.current);
@@ -104,5 +132,5 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     };
   }, []);
 
-  return { elapsedMs, interimText, finalText, recording, permissionDenied, start, stop };
+  return { elapsedMs, interimText, finalText, recording, permissionDenied, start, stop, switchLang };
 }
