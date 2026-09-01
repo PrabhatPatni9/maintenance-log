@@ -137,9 +137,10 @@ function RecordInner() {
 
   if (phase === 'capture') {
     const liveText = [capture.finalText, capture.interimText].filter(Boolean).join(' ');
+    const secondsLeft = Math.max(0, 45 - Math.floor(capture.elapsedMs / 1000));
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--base)' }}>
-        <div style={{ padding: '20px 20px 12px', textAlign: 'center' }}>
+      <div className="capture-screen">
+        <div className="capture-head">
           <span className="meta">
             {machine ? `${t('review.machineLabel')} ${machine.machineNo} · ${machine.shedName}` : ''}
           </span>
@@ -158,47 +159,46 @@ function RecordInner() {
             </button>
           ))}
         </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <div className="capture-body">
           {capture.permissionDenied ? (
             <p style={{ color: 'var(--fault)', padding: 24, textAlign: 'center' }}>{t('capture.permissionNeeded')}</p>
           ) : (
             <>
-              <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Countdown lives inside the ring rather than under it: the
+                  ring is already the thing the eye goes to, and stacking a
+                  second number below it wasted the vertical room the Stop
+                  button needs on a short phone. */}
+              <div className="capture-ring-wrap">
                 <CaptureRing elapsedMs={capture.elapsedMs} />
-                <div
-                  style={{
-                    position: 'absolute',
-                    width: 96,
-                    height: 96,
-                    borderRadius: '50%',
-                    background: 'var(--amber)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                  }}
-                >
-                  REC
+                <div className={`capture-rec${secondsLeft <= 5 ? ' is-ending' : ''}`}>
+                  <span className="capture-rec-dot" />
+                  <span className="capture-rec-time">
+                    {capture.elapsedMs >= CAPTURE_INNER_MS ? '0:00' : `0:${String(secondsLeft).padStart(2, '0')}`}
+                  </span>
                 </div>
               </div>
-              <p className="machine-number" style={{ fontSize: 28 }}>
-                {capture.elapsedMs >= CAPTURE_INNER_MS
-                  ? t('capture.wrappingUp')
-                  : `0:${String(Math.max(0, 45 - Math.floor(capture.elapsedMs / 1000))).padStart(2, '0')}`}
+              <p className="capture-status">
+                {capture.elapsedMs >= CAPTURE_INNER_MS ? t('capture.wrappingUp') : t('capture.recording')}
               </p>
               {/* The live transcript is the thing that makes an operator trust
                   this app on day one — settled words in ink, the word being
-                  recognised right now in steel. */}
-              <p style={{ maxWidth: 340, textAlign: 'center', minHeight: 96, fontSize: 18, padding: '0 16px' }}>
-                <span>{capture.finalText}</span>{' '}
-                <span style={{ color: 'var(--steel)' }}>{capture.interimText}</span>
-                {!liveText && <span className="meta">{t('capture.listening')}</span>}
-              </p>
+                  recognised right now in steel. Scrolls inside its own box so
+                  a long note can never push Stop off the screen. */}
+              <div className="capture-transcript">
+                {liveText ? (
+                  <p>
+                    <span>{capture.finalText}</span>{' '}
+                    <span style={{ color: 'var(--steel)' }}>{capture.interimText}</span>
+                  </p>
+                ) : (
+                  <p className="meta">{t('capture.listening')}</p>
+                )}
+              </div>
             </>
           )}
         </div>
-        <div style={{ padding: 20 }}>
-          <button className="btn btn-primary btn-block" style={{ minHeight: 64, fontSize: 20 }} onClick={() => void handleStop()}>
+        <div className="capture-foot">
+          <button className="btn btn-stop btn-block" onClick={() => void handleStop()}>
             {t('capture.stopButton')}
           </button>
         </div>

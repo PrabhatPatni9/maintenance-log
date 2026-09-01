@@ -55,9 +55,16 @@ shedRoutes.patch('/:id', requireAdmin, async (c) => {
     await c.env.DB.prepare('UPDATE sheds SET name = ? WHERE id = ?').bind(body.name, id).run();
   }
   if (body.active !== undefined) {
-    await c.env.DB.prepare('UPDATE sheds SET active = ? WHERE id = ?')
-      .bind(body.active ? 1 : 0, id)
-      .run();
+    // A shed is its machines. Deactivating the shed but leaving 56 looms
+    // marked active would leave them showing up in pickers and reports for a
+    // shed that is supposed to be shut, so the state moves together.
+    await c.env.DB.batch([
+      c.env.DB.prepare('UPDATE sheds SET active = ? WHERE id = ?').bind(body.active ? 1 : 0, id),
+      c.env.DB.prepare('UPDATE machines SET active = ? WHERE shed_id = ?').bind(
+        body.active ? 1 : 0,
+        id,
+      ),
+    ]);
   }
 
   const row = await c.env.DB.prepare('SELECT * FROM sheds WHERE id = ?')

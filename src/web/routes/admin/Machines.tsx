@@ -82,32 +82,32 @@ export function Machines() {
       </form>
 
       {machinesByShed.map(({ shed, machines: shedMachines }) => (
-        <div key={shed.id} style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 15, color: 'var(--steel)', marginBottom: 10 }}>
-            {shed.code} — {shed.name}
-            <span className="meta" style={{ marginLeft: 8 }}>
-              {shedMachines.length}
+        <div key={shed.id} style={{ marginBottom: 28 }}>
+          <div className="group-head">
+            <div className={`shed-badge${shed.active ? '' : ' is-off'}`}>{shed.code}</div>
+            <span style={{ fontWeight: 600 }}>{shed.name}</span>
+            <span className="meta">
+              {shedMachines.length} · {shedMachines.filter((m) => m.active).length} on
             </span>
-          </h2>
+          </div>
           {shedMachines.length === 0 ? (
             <p className="meta">{t('machine.noMachines')}</p>
           ) : (
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            /* Tap the number to toggle it. A grid of numbers is how the shed
+               floor is actually laid out, and it beats a list of rows with a
+               button on each when there are 56 of them. */
+            <div className="machine-grid">
               {shedMachines.map((m) => (
-                <li
+                <button
                   key={m.id}
-                  className="panel"
-                  style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, opacity: m.active ? 1 : 0.5 }}
+                  className={`machine-tile${m.active ? '' : ' is-off'}`}
+                  onClick={() => void toggleActive(m)}
+                  title={t(m.active ? 'common.deactivate' : 'common.activate')}
                 >
-                  <span className="machine-number" style={{ fontSize: 18 }}>
-                    {m.machineNo}
-                  </span>
-                  <button className="btn btn-small" onClick={() => void toggleActive(m)}>
-                    {t(m.active ? 'common.deactivate' : 'common.activate')}
-                  </button>
-                </li>
+                  {m.machineNo}
+                </button>
               ))}
-            </ul>
+            </div>
           )}
         </div>
       ))}

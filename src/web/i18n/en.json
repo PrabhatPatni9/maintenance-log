@@ -47,7 +47,9 @@
     "queueEmpty": "All sent",
     "todayLogsTitle": "Today's logs",
     "noLogsToday": "No logs yet today. Record your first one.",
-    "greeting": "Hello, {{name}}"
+    "greeting": "Hello, {{name}}",
+    "myLogsTitle": "My logs",
+    "viewAll": "View all"
   },
   "machine": {
     "pickShedTitle": "Choose a shed",
@@ -150,13 +152,17 @@
       "exportCsv": "Export CSV",
       "noResults": "No logs match these filters.",
       "editLog": "Edit log",
-      "editReasonRequired": "A reason is required to save this edit."
+      "editReasonRequired": "A reason is required to save this edit.",
+      "deleteLog": "Delete",
+      "deleteConfirm": "Delete this log? It stops appearing in history and exports.",
+      "deleteReason": "Why is this being deleted?"
     }
   },
   "settings": {
     "title": "Settings",
     "languageLabel": "Language",
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "adminPanel": "Admin panel"
   },
   "install": {
     "promptTitle": "Install Ratanmoti Maintenance",

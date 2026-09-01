@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import type { Lang } from '@shared/types';
 import { useLang, useT } from '../i18n';
 import { useAuth } from '../lib/auth-context';
@@ -40,8 +40,18 @@ function SettingsInner() {
         ))}
       </div>
 
+      {/* The only way into the admin panel, and it is only rendered for an
+          admin. An operator never sees that there is one — the server
+          enforces it too, so a guessed URL gets them nothing. */}
+      {user?.role === 'admin' && (
+        <Link to="/admin/sheds" className="btn btn-primary btn-block admin-entry">
+          {t('settings.adminPanel')}
+        </Link>
+      )}
+
       <button
         className="btn btn-block"
+        style={{ marginTop: 12 }}
         onClick={() => {
           void logout().then(() => void navigate({ to: '/login' }));
         }}

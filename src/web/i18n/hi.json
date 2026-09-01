@@ -47,7 +47,9 @@
     "queueEmpty": "सब भेज दिया गया",
     "todayLogsTitle": "आज के लॉग",
     "noLogsToday": "आज अभी तक कोई लॉग नहीं। पहला लॉग रिकॉर्ड करें।",
-    "greeting": "नमस्ते, {{name}}"
+    "greeting": "नमस्ते, {{name}}",
+    "myLogsTitle": "मेरे लॉग",
+    "viewAll": "सब देखें"
   },
   "machine": {
     "pickShedTitle": "शेड चुनें",
@@ -150,13 +152,17 @@
       "exportCsv": "CSV एक्सपोर्ट करें",
       "noResults": "इन फ़िल्टर से कोई लॉग नहीं मिला।",
       "editLog": "लॉग बदलें",
-      "editReasonRequired": "यह बदलाव सेव करने के लिए कारण लिखना जरूरी है।"
+      "editReasonRequired": "यह बदलाव सेव करने के लिए कारण लिखना जरूरी है।",
+      "deleteLog": "हटाएं",
+      "deleteConfirm": "यह लॉग हटाएं? यह हिस्ट्री और एक्सपोर्ट में नहीं दिखेगा।",
+      "deleteReason": "इसे क्यों हटाया जा रहा है?"
     }
   },
   "settings": {
     "title": "सेटिंग्स",
     "languageLabel": "भाषा",
-    "changeLanguage": "भाषा बदलें"
+    "changeLanguage": "भाषा बदलें",
+    "adminPanel": "एडमिन पैनल"
   },
   "install": {
     "promptTitle": "रत्नमोती मेंटेनन्स इंस्टॉल करें",

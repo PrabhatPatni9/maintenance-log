@@ -2,6 +2,10 @@ import { useCallback, useRef, useState } from 'react';
 import type { Lang } from '@shared/types';
 import { startRecognition, tryInstallLocal, isSupported, type SpeechHandle } from './speech';
 import { getSttMode } from './config';
+import { pingStart, pingWarning, pingEnd } from './sound';
+
+/** The UI counts down from 45s; warn with five left. */
+const WARN_AT_MS = 40_000;
 
 export interface SegmentResult {
   blob: Blob;
@@ -35,6 +39,7 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
   const rafRef = useRef<number>(0);
   const localInstallRef = useRef(false);
   const activeLangRef = useRef<Lang>(lang);
+  const warnedRef = useRef(false);
   // Authoritative copy. State drives rendering, but stop() reads the ref so a
   // hard stop firing from a stale animation-frame closure still returns every
   // word that was recognised.
@@ -45,6 +50,10 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
   const tick = useCallback(() => {
     const elapsed = performance.now() - startedAtRef.current;
     setElapsedMs(elapsed);
+    if (elapsed >= WARN_AT_MS && !warnedRef.current) {
+      warnedRef.current = true;
+      pingWarning();
+    }
     if (elapsed >= 50_000) {
       onHardStopRef.current();
       return;
@@ -83,9 +92,11 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     setElapsedMs(0);
     setPermissionDenied(false);
     finalTextRef.current = '';
+    warnedRef.current = false;
 
     startedAtRef.current = performance.now();
     setRecording(true);
+    pingStart();
     rafRef.current = requestAnimationFrame(tick);
 
     const sttMode = await getSttMode();
@@ -121,7 +132,8 @@ export function useCapture(lang: Lang, onHardStop: () => void) {
     speechRef.current?.stop();
     speechRef.current = null;
 
-    if (navigator.vibrate) navigator.vibrate(200); // one short vibration on stop, no sound
+    pingEnd();
+    if (navigator.vibrate) navigator.vibrate(200); // the phone is often not being looked at
 
     return {
       blob: new Blob([], { type: 'audio/webm' }),

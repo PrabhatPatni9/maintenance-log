@@ -235,6 +235,169 @@ a:focus-visible {
   font-size: 15px;
 }
 
+/* Column shell so a screen can pin a control to the bottom of the viewport
+   and know exactly how much room the header left it. */
+/* A definite height, not a minimum: the capture screen pins Stop to the
+   bottom, and a min-height lets a tall child push it past the fold instead
+   of constraining it. Scrolling moves into .app-main, which is what the
+   admin screens want anyway. */
+.app-shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Capture screen: fixed to what is left below the header, never scrolls as a
+   page. Stop is always on screen — the operator should never have to hunt for
+   it to end a 10 second note. */
+.capture-screen {
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--base);
+}
+
+/* Short phones: trim the padding around the ring rather than the ring
+   itself, and never the Stop button. */
+@media (max-height: 700px) {
+  .capture-body {
+    padding-top: 4px;
+    gap: 6px;
+  }
+  .capture-head {
+    padding: 10px 20px 8px;
+  }
+}
+
+.capture-head {
+  flex: none;
+  padding: 14px 20px 10px;
+  text-align: center;
+}
+
+.capture-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0 8px;
+}
+
+.capture-ring-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.capture-rec {
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  background: var(--amber);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.capture-rec-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink);
+  opacity: 0.75;
+  animation: rec-blink 1.4s ease-in-out infinite;
+}
+
+.capture-rec-time {
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+@keyframes rec-blink {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 0.15; }
+}
+
+.capture-status {
+  flex: none;
+  font-size: 15px;
+  color: var(--steel);
+  font-weight: 500;
+}
+
+/* The last five seconds pulse, so the warning beep has something on screen
+   that agrees with it. */
+.capture-rec.is-ending {
+  animation: rec-pulse 1s ease-in-out infinite;
+}
+
+@keyframes rec-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.capture-countdown {
+  flex: none;
+  font-weight: 700;
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sits in a bordered well so it reads as "this is what we heard" rather than
+   as loose text floating on the page, and scrolls internally. */
+.capture-transcript {
+  flex: 1;
+  min-height: 72px;
+  width: calc(100% - 32px);
+  max-width: 420px;
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  text-align: left;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.capture-foot {
+  flex: none;
+  padding: 12px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+/* Stop is the one control on this screen, so it looks like it. */
+.btn-stop {
+  min-height: 68px;
+  font-size: 21px;
+  font-weight: 600;
+  background: var(--ink);
+  color: var(--panel);
+  border-color: var(--ink);
+}
+
 /* Spoken-language switch on the capture screen. Small enough that the ring
    stays the one bold thing, big enough for a thumb. */
 .speech-lang-row {
@@ -284,6 +447,106 @@ a:focus-visible {
   transform: translateY(1px);
   background: var(--base);
   border-color: var(--steel);
+}
+
+/* A machine or shed that is switched off still has to be visible and
+   tappable to switch back on — greyed, not hidden. */
+.machine-tile.is-off {
+  color: var(--steel);
+  background: var(--base);
+  border-style: dashed;
+}
+
+/* Shed identity, reused wherever a shed is named. Reads as a stencilled
+   plate rather than a coloured chip. */
+.shed-badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  background: var(--ink);
+  color: var(--panel);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.shed-badge.is-off {
+  background: var(--steel);
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* One row in any list of things: a shed, a machine, a log. */
+.record-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.record-row.is-off {
+  background: var(--base);
+  color: var(--steel);
+}
+
+.record-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.record-time {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--steel);
+  font-size: 15px;
+  padding-top: 1px;
+}
+
+/* Two lines then ellipsis: enough to recognise the log, never enough for one
+   rambling note to push the rest of the day off the screen. */
+.record-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.btn-danger {
+  color: var(--fault);
+  border-color: var(--fault);
+}
+
+.btn-danger:not(:disabled):active {
+  background: var(--fault);
+  color: var(--panel);
+}
+
+.admin-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

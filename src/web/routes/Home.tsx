@@ -49,21 +49,28 @@ function HomeInner() {
       {logs === null && <p className="meta">{t('common.loading')}</p>}
       {logs !== null && logs.length === 0 && <p className="meta">{t('home.noLogsToday')}</p>}
       {logs !== null && logs.length > 0 && (
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {logs.map((log) => (
-            <li key={log.id} className="panel" style={{ marginBottom: 8 }}>
-              <Link
-                to="/logs/$logId"
-                params={{ logId: log.id }}
-                style={{ display: 'block', padding: '14px 16px', textDecoration: 'none', color: 'inherit' }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{log.transcript?.slice(0, 60) || log.typedNote?.slice(0, 60) || log.status}</span>
-                  <span className="meta">{new Date(log.clientCreatedAt).toLocaleTimeString()}</span>
-                </div>
-              </Link>
-            </li>
-          ))}
+        <ul className="stack-list">
+          {logs.map((log) => {
+            const text = log.transcript?.trim() || log.typedNote?.trim() || '';
+            return (
+              <li key={log.id} className="panel">
+                <Link to="/logs/$logId" params={{ logId: log.id }} className="record-link">
+                  <div className="record-time">
+                    {new Date(log.clientCreatedAt).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="record-text">{text || t('capture.savedOffline')}</div>
+                    <div className="meta">
+                      {log.status === 'approved' ? t('review.approved') : log.status}
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

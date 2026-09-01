@@ -23,7 +23,10 @@ const SELECT = `
 `;
 
 function buildWhere(filters: HistoryFilters): { clause: string; binds: unknown[] } {
-  const where: string[] = ["l.status = 'approved'"]; // history is the approved record, not drafts in flight
+  const where: string[] = [
+    "l.status = 'approved'", // history is the approved record, not drafts in flight
+    'l.deleted_at IS NULL', // a log an admin threw out never appears again, export included
+  ];
   const binds: unknown[] = [];
 
   if (filters.shedId) {

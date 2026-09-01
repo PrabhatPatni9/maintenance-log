@@ -55,6 +55,20 @@ export function History() {
     window.open(`/api/admin/history/export.csv?${params.toString()}`, '_blank');
   }
 
+  /**
+   * Throws a bogus log out of every list and the CSV export. The row itself
+   * stays in the database, stamped with who removed it and why — a log that
+   * has been edited or deleted is still part of the record of what happened.
+   */
+  async function deleteLog(row: HistoryRow) {
+    if (!window.confirm(t('admin.history.deleteConfirm'))) return;
+    const reason = window.prompt(t('admin.history.deleteReason')) ?? '';
+    await api.del(`/logs/${row.log_id}`, { reason });
+    // Drop every row for that log — history is one row per item, so a log
+    // with three items has three rows on screen.
+    setRows((prev) => prev.filter((r) => r.log_id !== row.log_id));
+  }
+
   async function saveEdit() {
     if (!editing || !editReason.trim()) return;
     await api.patch(`/admin/history/logs/${editing.log_id}`, {
@@ -115,16 +129,22 @@ export function History() {
                 <td style={{ padding: 8, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {r.transcript}
                 </td>
-                <td style={{ padding: 8 }}>
+                <td style={{ padding: 8, whiteSpace: 'nowrap' }}>
                   <button
-                    className="btn"
-                    style={{ minHeight: 36, padding: '0 10px' }}
+                    className="btn btn-small"
                     onClick={() => {
                       setEditing(r);
                       setEditText(r.transcript ?? '');
                     }}
                   >
                     {t('common.edit')}
+                  </button>
+                  <button
+                    className="btn btn-small btn-danger"
+                    style={{ marginLeft: 6 }}
+                    onClick={() => void deleteLog(r)}
+                  >
+                    {t('admin.history.deleteLog')}
                   </button>
                 </td>
               </tr>

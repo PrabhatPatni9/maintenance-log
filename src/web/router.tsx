@@ -25,12 +25,17 @@ function RootLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const chrome = Boolean(user) && pathname !== '/language';
 
+  // A column shell rather than a plain fragment, so a screen that needs to
+  // pin something to the bottom of the viewport (the capture screen's Stop
+  // button) can measure against what is actually left below the header.
   return (
-    <>
+    <div className="app-shell">
       {chrome && <Header />}
-      <Outlet />
+      <main className="app-main">
+        <Outlet />
+      </main>
       {chrome && <InstallPrompt />}
-    </>
+    </div>
   );
 }
 

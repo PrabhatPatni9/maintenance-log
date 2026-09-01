@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
-import { requireAuth } from '../lib/middleware';
+import { requireAdmin, requireAuth } from '../lib/middleware';
+import { uuidv7 } from '@shared/id';
 import { audioKey, signUploadToken, verifyUploadToken } from '../lib/r2';
 import { fetchMachineWithShed } from '../lib/machine-lookup';
 import { mapLog, mapSegment, mapItem, mapEdit } from '../lib/mappers';
@@ -179,6 +180,40 @@ logRoutes.post('/:id/approve', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * Throw out a bogus log. Admin only, and a deactivation rather than a real
+ * DELETE: the row stays, stamped with who removed it and when, and an entry
+ * goes into log_edits so the audit trail still explains itself. Every list,
+ * the CSV export included, filters on deleted_at IS NULL, so as far as
+ * anyone using the app is concerned it is gone.
+ */
+logRoutes.delete('/:id', requireAdmin, async (c) => {
+  const logId = c.req.param('id');
+  const session = c.get('session');
+  const reason = (await c.req.json<{ reason?: string }>().catch(() => ({ reason: undefined })))?.reason;
+
+  const log = await c.env.DB.prepare('SELECT status, deleted_at FROM logs WHERE id = ?')
+    .bind(logId)
+    .first<{ status: string; deleted_at: number | null }>();
+  if (!log) return c.json({ error: 'not found' }, 404);
+  if (log.deleted_at) return c.json({ ok: true }); // already gone, idempotent
+
+  const now = Date.now();
+  await c.env.DB.batch([
+    c.env.DB.prepare('UPDATE logs SET deleted_at = ?, deleted_by = ? WHERE id = ?').bind(
+      now,
+      session.phone,
+      logId,
+    ),
+    c.env.DB.prepare(
+      `INSERT INTO log_edits (id, log_id, admin_phone, field, value_before, value_after, reason, edited_at)
+       VALUES (?, ?, ?, 'deleted', 'visible', 'deleted', ?, ?)`,
+    ).bind(uuidv7(), logId, session.phone, reason?.trim() || 'bogus log', now),
+  ]);
+
+  return c.json({ ok: true });
+});
+
 /** Today's logs for the operator's home screen. */
 logRoutes.get('/', async (c) => {
   const session = c.get('session');
@@ -187,10 +222,10 @@ logRoutes.get('/', async (c) => {
 
   const stmt = mine
     ? c.env.DB.prepare(
-        'SELECT * FROM logs WHERE operator_phone = ? AND client_created_at >= ? ORDER BY client_created_at DESC LIMIT 50',
+        'SELECT * FROM logs WHERE operator_phone = ? AND client_created_at >= ? AND deleted_at IS NULL ORDER BY client_created_at DESC LIMIT 50',
       ).bind(session.phone, since)
     : c.env.DB.prepare(
-        'SELECT * FROM logs WHERE client_created_at >= ? ORDER BY client_created_at DESC LIMIT 50',
+        'SELECT * FROM logs WHERE client_created_at >= ? AND deleted_at IS NULL ORDER BY client_created_at DESC LIMIT 50',
       ).bind(since);
 
   const { results } = await stmt.all<Record<string, unknown>>();
@@ -200,7 +235,7 @@ logRoutes.get('/', async (c) => {
 logRoutes.get('/:id', async (c) => {
   const logId = c.req.param('id');
 
-  const row = await c.env.DB.prepare('SELECT * FROM logs WHERE id = ?')
+  const row = await c.env.DB.prepare('SELECT * FROM logs WHERE id = ? AND deleted_at IS NULL')
     .bind(logId)
     .first<Record<string, unknown>>();
   if (!row) return c.json({ error: 'not found' }, 404);
