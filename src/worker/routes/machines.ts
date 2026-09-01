@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../lib/middleware';
 import { requireAdmin, requireAuth, requireSuperAdmin } from '../lib/middleware';
-import { mapMachine, mapItem } from '../lib/mappers';
+import { mapMachine } from '../lib/mappers';
 import { buildSetClause } from '../lib/sql-update';
 import { accessibleShedIds, canAccessShed } from '../lib/shed-access';
+import { itemsByLogId } from '../lib/log-items';
 import { uuidv7 } from '@shared/id';
 
 export const machineRoutes = new Hono<AppEnv>();
@@ -285,22 +286,7 @@ machineRoutes.get('/:id/history', async (c) => {
     .bind(id, since)
     .all<Record<string, unknown>>();
 
-  const logIds = logRows.map((r) => r.id as string);
-  const itemsByLog = new Map<string, ReturnType<typeof mapItem>[]>();
-  if (logIds.length > 0) {
-    const placeholders = logIds.map(() => '?').join(',');
-    const { results: itemRows } = await c.env.DB.prepare(
-      `SELECT * FROM log_items WHERE log_id IN (${placeholders})`,
-    )
-      .bind(...logIds)
-      .all<Record<string, unknown>>();
-    for (const r of itemRows) {
-      const item = mapItem(r);
-      const list = itemsByLog.get(item.logId) ?? [];
-      list.push(item);
-      itemsByLog.set(item.logId, list);
-    }
-  }
+  const itemsByLog = await itemsByLogId(c.env.DB, logRows.map((r) => r.id as string));
 
   const logs = logRows.map((r) => ({
     id: r.id as string,

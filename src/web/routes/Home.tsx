@@ -1,37 +1,44 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useT } from '../i18n';
+import { useLang, useT } from '../i18n';
 import { useAuth } from '../lib/auth-context';
 import { RequireAuth } from '../lib/guards';
 import { api } from '../lib/api';
 import { db } from '../lib/db';
 import type { CachedMachine, CachedShed } from '../lib/db';
 import { refreshMachines } from '../lib/machines-cache';
-import type { LogRecord, ShedStats } from '@shared/types';
+import { labelFor } from '@shared/taxonomy';
+import type { LogSummary, ShedStats, TaxonomyItemRecord } from '@shared/types';
 
 const PRESELECT_KEY = 'preselectedShedId';
 
 function HomeInner() {
   const t = useT();
+  const { lang } = useLang();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [logs, setLogs] = useState<LogRecord[] | null>(null);
+  const [logs, setLogs] = useState<LogSummary[] | null>(null);
   const [sheds, setSheds] = useState<CachedShed[]>([]);
   const [machines, setMachines] = useState<CachedMachine[]>([]);
   const [query, setQuery] = useState('');
   const [shedStats, setShedStats] = useState<{ shed: CachedShed; stats: ShedStats } | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [logQuery, setLogQuery] = useState('');
+  const [labels, setLabels] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     const midnight = new Date();
     midnight.setHours(0, 0, 0, 0);
     api
-      .get<{ logs: LogRecord[] }>(`/logs?since=${midnight.getTime()}`)
+      .get<{ logs: LogSummary[] }>(`/logs?since=${midnight.getTime()}`)
       .then((r) => setLogs(r.logs))
       .catch(() => setLogs([]));
 
     void db.sheds.toArray().then(setSheds);
     void db.machines.toArray().then(setMachines);
+    void db.taxonomy.toArray().then((items) => {
+      setLabels(new Map(items.map((i) => [i.code, labelFor(i as unknown as TaxonomyItemRecord, lang)])));
+    });
     void refreshMachines()
       .then(() => Promise.all([db.sheds.toArray(), db.machines.toArray()]))
       .then(([s, m]) => {
@@ -39,7 +46,25 @@ function HomeInner() {
         setMachines(m);
       })
       .catch(() => {});
-  }, []);
+  }, [lang]);
+
+  // Filters the list already on screen — today's logs is a short list, so a
+  // second round trip to the server for this would be answering a "did I
+  // already log X" question slower than just looking. Matches the machine,
+  // the shed, the transcript, or any pill's label in the operator's language.
+  const filteredLogs = useMemo(() => {
+    if (!logs) return logs;
+    const q = logQuery.trim().toLowerCase();
+    if (!q) return logs;
+    return logs.filter((log) => {
+      const text = (log.transcript ?? '') + ' ' + (log.typedNote ?? '');
+      if (text.toLowerCase().includes(q)) return true;
+      if (log.machineNo.toLowerCase().includes(q) || log.shedCode.toLowerCase().includes(q) || log.shedName.toLowerCase().includes(q)) {
+        return true;
+      }
+      return log.items.some((item) => (labels.get(item.code) ?? item.code).toLowerCase().includes(q));
+    });
+  }, [logs, logQuery, labels]);
 
   // Two quick answers, not a navigation: a machine number takes the
   // operator straight to that machine's history, a shed code or name shows
@@ -163,11 +188,24 @@ function HomeInner() {
         {t('home.todayLogsTitle')}
       </h2>
 
+      {logs !== null && logs.length > 0 && (
+        <input
+          className="input"
+          style={{ marginBottom: 12 }}
+          placeholder={t('home.searchLogsPlaceholder')}
+          value={logQuery}
+          onChange={(e) => setLogQuery(e.target.value)}
+        />
+      )}
+
       {logs === null && <p className="meta">{t('common.loading')}</p>}
       {logs !== null && logs.length === 0 && <p className="meta">{t('home.noLogsToday')}</p>}
-      {logs !== null && logs.length > 0 && (
+      {logs !== null && logs.length > 0 && filteredLogs?.length === 0 && (
+        <p className="meta">{t('home.noLogsMatch', { query: logQuery })}</p>
+      )}
+      {filteredLogs !== null && filteredLogs !== undefined && filteredLogs.length > 0 && (
         <ul className="stack-list">
-          {logs.map((log) => {
+          {filteredLogs.map((log) => {
             const text = log.transcript?.trim() || log.typedNote?.trim() || '';
             return (
               <li key={log.id} className="panel">
@@ -179,8 +217,20 @@ function HomeInner() {
                     })}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="meta" style={{ marginBottom: 2 }}>
+                      {log.machineNo} · {log.shedCode}
+                    </div>
                     <div className="record-text">{text || t('capture.savedOffline')}</div>
-                    <div className="meta">
+                    {log.items.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                        {log.items.map((item) => (
+                          <span key={item.id} className="history-pill">
+                            {labels.get(item.code) ?? item.code}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="meta" style={{ marginTop: 4 }}>
                       {log.status === 'approved' ? t('review.approved') : log.status}
                     </div>
                   </div>

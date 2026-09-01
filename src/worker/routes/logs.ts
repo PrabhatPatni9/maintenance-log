@@ -8,6 +8,7 @@ import { mapLog, mapSegment, mapItem, mapEdit } from '../lib/mappers';
 import { transcribeLog } from '../lib/transcribe';
 import { selectProvider } from '../stt/select';
 import { canAccessShed } from '../lib/shed-access';
+import { itemsByLogId } from '../lib/log-items';
 import type { Lang, SegmentSource, ItemOrigin } from '@shared/types';
 
 export const logRoutes = new Hono<AppEnv>();
@@ -285,22 +286,42 @@ logRoutes.delete('/:id/purge', requireSuperAdmin, async (c) => {
   return c.json({ ok: true });
 });
 
-/** Today's logs for the operator's home screen. */
+/**
+ * Today's logs for the operator's home screen. Joined out to the machine
+ * and shed, and to the pills each log carries — a bare transcript string
+ * told the operator nothing at a glance about which loom or what was done;
+ * this is what the home screen's "at a glance" list actually needs.
+ */
 logRoutes.get('/', async (c) => {
   const session = c.get('session');
   const mine = c.req.query('mine') !== '0';
   const since = Number(c.req.query('since') ?? 0);
 
+  const select = `
+    SELECT l.*, m.machine_no, s.code AS shed_code, s.name AS shed_name
+    FROM logs l
+    JOIN machines m ON m.id = l.machine_id
+    JOIN sheds s ON s.id = m.shed_id
+  `;
   const stmt = mine
     ? c.env.DB.prepare(
-        'SELECT * FROM logs WHERE operator_phone = ? AND client_created_at >= ? AND deleted_at IS NULL ORDER BY client_created_at DESC LIMIT 50',
+        `${select} WHERE l.operator_phone = ? AND l.client_created_at >= ? AND l.deleted_at IS NULL ORDER BY l.client_created_at DESC LIMIT 50`,
       ).bind(session.phone, since)
     : c.env.DB.prepare(
-        'SELECT * FROM logs WHERE client_created_at >= ? AND deleted_at IS NULL ORDER BY client_created_at DESC LIMIT 50',
+        `${select} WHERE l.client_created_at >= ? AND l.deleted_at IS NULL ORDER BY l.client_created_at DESC LIMIT 50`,
       ).bind(since);
 
   const { results } = await stmt.all<Record<string, unknown>>();
-  return c.json({ logs: results.map(mapLog) });
+  const itemsByLog = await itemsByLogId(c.env.DB, results.map((r) => r.id as string));
+
+  const logs = results.map((r) => ({
+    ...mapLog(r),
+    machineNo: r.machine_no as string,
+    shedCode: r.shed_code as string,
+    shedName: r.shed_name as string,
+    items: itemsByLog.get(r.id as string) ?? [],
+  }));
+  return c.json({ logs });
 });
 
 logRoutes.get('/:id', async (c) => {

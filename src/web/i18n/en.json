@@ -54,7 +54,9 @@
     "searchPlaceholder": "Search machine number or shed",
     "searchNoMatch": "No machine or shed matches \"{{query}}\"",
     "shedStatsMachines": "Machines you've worked on in {{code}}: {{count}}",
-    "shedStatsLogs": "{{count}} logs filed by you in this shed"
+    "shedStatsLogs": "{{count}} logs filed by you in this shed",
+    "searchLogsPlaceholder": "Search today's logs (machine, shed, part, note)",
+    "noLogsMatch": "No log matches \"{{query}}\""
   },
   "machine": {
     "pickShedTitle": "Choose a shed",

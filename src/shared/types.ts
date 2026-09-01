@@ -118,6 +118,16 @@ export interface LogEditRecord {
   editedAt: number;
 }
 
+/** A log plus the machine/shed it belongs to and the pills it carries — what
+ * the home screen's "today's logs" list actually needs to be useful at a
+ * glance instead of a bare transcript string. Returned by GET /api/logs. */
+export interface LogSummary extends LogRecord {
+  machineNo: string;
+  shedCode: string;
+  shedName: string;
+  items: LogItemRecord[];
+}
+
 /** One machine's maintenance history, whoever recorded each entry — the
  * shed-pick-then-machine-pick-then-see-everything flow (CLAUDE.md-adjacent:
  * the record belongs to the loom, not to whichever operator was holding the

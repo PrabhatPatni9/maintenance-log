@@ -54,7 +54,9 @@
     "searchPlaceholder": "मशीन नंबर या शेड खोजें",
     "searchNoMatch": "\"{{query}}\" से कोई मशीन या शेड नहीं मिला",
     "shedStatsMachines": "{{code}} में आपने जितनी मशीनों पर काम किया: {{count}}",
-    "shedStatsLogs": "इस शेड में आपके द्वारा {{count}} लॉग दर्ज किए गए"
+    "shedStatsLogs": "इस शेड में आपके द्वारा {{count}} लॉग दर्ज किए गए",
+    "searchLogsPlaceholder": "आज के लॉग खोजें (मशीन, शेड, पार्ट, नोट)",
+    "noLogsMatch": "\"{{query}}\" से कोई लॉग नहीं मिला"
   },
   "machine": {
     "pickShedTitle": "शेड चुनें",
