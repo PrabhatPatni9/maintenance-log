@@ -52,6 +52,36 @@ export async function createSession(
   });
 }
 
+/**
+ * The session record cached in KV (SessionRecord: phone, name, role, lang)
+ * is what GET /api/me and every route's `c.get('session')` read — never the
+ * DB directly. A name change has to land here too, or the operator's own
+ * greeting, header, and every place that reads their session name stays
+ * stale for up to 90 days (the session TTL) until they happen to log out
+ * and back in, which reads as "did that even save?" Re-reads the cookie's
+ * own `sid` rather than needing the caller to have one lying around.
+ */
+export async function updateSessionCache(
+  c: Context<AppEnv>,
+  patch: Partial<SessionRecord>,
+): Promise<void> {
+  const token = getCookie(c, COOKIE_NAME);
+  if (!token) return;
+  let sid: string;
+  try {
+    const { payload } = await jwtVerify(token, secretKey(c.env));
+    sid = payload.sid as string;
+  } catch {
+    return;
+  }
+  const raw = await c.env.SESSIONS.get(`session:${sid}`);
+  if (!raw) return;
+  const current = JSON.parse(raw) as SessionRecord;
+  await c.env.SESSIONS.put(`session:${sid}`, JSON.stringify({ ...current, ...patch }), {
+    expirationTtl: SESSION_SECONDS,
+  });
+}
+
 export async function destroySession(c: Context<AppEnv>): Promise<void> {
   const token = getCookie(c, COOKIE_NAME);
   if (token) {

@@ -415,6 +415,53 @@ a:focus-visible {
   background: var(--panel);
 }
 
+/* Sticky so the date stays legible while a long day's worth of logs
+   scrolls past underneath it — the whole point is never wondering which
+   day you're looking at. */
+.history-day-heading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--base);
+  padding: 8px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* The operator's persistent way around the app. A flex sibling of
+   .app-main in the column shell, not position:fixed — that keeps it out of
+   the way of any screen's own scroll rather than floating over content. */
+.bottom-nav {
+  flex: none;
+  display: flex;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0 6px;
+  text-decoration: none;
+  color: var(--steel);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bottom-nav-item.is-active {
+  color: var(--ink);
+}
+
+.bottom-nav-glyph {
+  font-size: 20px;
+  line-height: 1;
+}
+
 .history-pill {
   display: inline-flex;
   align-items: center;
@@ -746,7 +793,8 @@ a:focus-visible {
   font-size: 14px;
 }
 
-.admin-entry {
+.admin-entry,
+.btn-link {
   display: flex;
   align-items: center;
   justify-content: center;

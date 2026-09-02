@@ -1,6 +1,7 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, Outlet, redirect, useRouterState } from '@tanstack/react-router';
 import { useAuth } from './lib/auth-context';
 import { Header } from './components/Header';
+import { BottomNav } from './components/BottomNav';
 import { InstallPrompt } from './components/InstallPrompt';
 import { Index } from './routes/Index';
 import { LanguagePicker } from './routes/LanguagePicker';
@@ -9,6 +10,7 @@ import { MachinePicker } from './routes/MachinePicker';
 import { MachineHistory } from './routes/MachineHistory';
 import { Record } from './routes/Record';
 import { LogDetail } from './routes/LogDetail';
+import { History as OperatorHistory } from './routes/History';
 import { Settings } from './routes/Settings';
 
 // Admin screens are never opened by an operator on the shed floor — keep all
@@ -22,10 +24,18 @@ const Taxonomy = lazyRouteComponent(() => import('./routes/admin/Taxonomy'), 'Ta
 const History = lazyRouteComponent(() => import('./routes/admin/History'), 'History');
 const Dashboard = lazyRouteComponent(() => import('./routes/admin/Dashboard'), 'Dashboard');
 
+// Only the top-level destinations get the bottom nav. Every other screen
+// already owns the bottom of the viewport for its own action — the capture
+// screen's Stop button, a machine's persistent "Record a new log" footer —
+// and stacking a second bar under those would just fight them for the same
+// sliver of a short phone.
+const BOTTOM_NAV_PATHS = new Set(['/', '/history', '/settings', '/machine']);
+
 function RootLayout() {
   const { user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const chrome = Boolean(user) && pathname !== '/language';
+  const showBottomNav = chrome && !pathname.startsWith('/admin') && BOTTOM_NAV_PATHS.has(pathname);
 
   // A column shell rather than a plain fragment, so a screen that needs to
   // pin something to the bottom of the viewport (the capture screen's Stop
@@ -37,6 +47,7 @@ function RootLayout() {
         <Outlet />
       </main>
       {chrome && <InstallPrompt />}
+      {showBottomNav && <BottomNav />}
     </div>
   );
 }
@@ -50,6 +61,7 @@ const machineRoute = createRoute({ getParentRoute: () => rootRoute, path: '/mach
 const machineHistoryRoute = createRoute({ getParentRoute: () => rootRoute, path: '/machine/$machineId', component: MachineHistory });
 const recordRoute = createRoute({ getParentRoute: () => rootRoute, path: '/record/$machineId', component: Record });
 const logDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/logs/$logId', component: LogDetail });
+const historyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/history', component: OperatorHistory });
 const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: Settings });
 
 const adminRoute = createRoute({ getParentRoute: () => rootRoute, path: '/admin', component: AdminShell });
@@ -75,6 +87,7 @@ const routeTree = rootRoute.addChildren([
   machineHistoryRoute,
   recordRoute,
   logDetailRoute,
+  historyRoute,
   settingsRoute,
   adminRoute.addChildren([
     adminIndexRoute,

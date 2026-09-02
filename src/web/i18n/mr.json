@@ -56,7 +56,8 @@
     "shedStatsMachines": "{{code}} मध्ये तुम्ही काम केलेल्या मशीन्स: {{count}}",
     "shedStatsLogs": "या शेडमध्ये तुम्ही {{count}} लॉग नोंदवले आहेत",
     "searchLogsPlaceholder": "आजचे लॉग शोधा (मशीन, शेड, पार्ट, नोंद)",
-    "noLogsMatch": "\"{{query}}\" शी जुळणारा लॉग नाही"
+    "noLogsMatch": "\"{{query}}\" शी जुळणारा लॉग नाही",
+    "viewFullHistory": "संपूर्ण हिस्ट्री पहा"
   },
   "machine": {
     "pickShedTitle": "शेड निवडा",
@@ -218,7 +219,18 @@
     "title": "सेटिंग्स",
     "languageLabel": "भाषा",
     "changeLanguage": "भाषा बदला",
-    "adminPanel": "अ‍ॅडमिन पॅनेल"
+    "adminPanel": "अ‍ॅडमिन पॅनेल",
+    "editName": "बदला",
+    "saveError": "सेव्ह होऊ शकले नाही. पुन्हा प्रयत्न करा.",
+    "changePassword": "पासवर्ड बदला",
+    "currentPasswordLabel": "सध्याचा पासवर्ड",
+    "newPasswordLabel": "नवीन पासवर्ड",
+    "confirmPasswordLabel": "नवीन पासवर्ड पुन्हा टाका",
+    "passwordMismatch": "नवीन पासवर्ड आणि पुन्हा टाकलेला पासवर्ड जुळत नाहीत.",
+    "passwordTooShort": "नवीन पासवर्ड खूप लहान आहे.",
+    "currentPasswordWrong": "सध्याचा पासवर्ड चुकीचा आहे.",
+    "passwordChanged": "पासवर्ड बदलला गेला.",
+    "changePasswordButton": "पासवर्ड बदला"
   },
   "install": {
     "promptTitle": "रत्नमोती मेंटेनन्स इंस्टॉल करा",
@@ -240,5 +252,15 @@
     "rangeLabel": "गेले {{days}} दिवस, ज्याने कोणी काम केले असेल त्याचे",
     "empty": "गेल्या {{days}} दिवसांत या मशीनवर कोणतीही मेंटेनन्स नोंद नाही.",
     "recordButton": "नवीन मेंटेनन्स लॉग नोंदवा"
+  },
+  "nav": {
+    "home": "होम",
+    "history": "हिस्ट्री",
+    "settings": "सेटिंग्ज"
+  },
+  "history": {
+    "title": "हिस्ट्री",
+    "empty": "अजून कोणताही लॉग नोंदवलेला नाही.",
+    "loadMore": "जुने दिवस पहा"
   }
 }

@@ -56,7 +56,8 @@
     "shedStatsMachines": "Machines you've worked on in {{code}}: {{count}}",
     "shedStatsLogs": "{{count}} logs filed by you in this shed",
     "searchLogsPlaceholder": "Search today's logs (machine, shed, part, note)",
-    "noLogsMatch": "No log matches \"{{query}}\""
+    "noLogsMatch": "No log matches \"{{query}}\"",
+    "viewFullHistory": "View full history"
   },
   "machine": {
     "pickShedTitle": "Choose a shed",
@@ -218,7 +219,18 @@
     "title": "Settings",
     "languageLabel": "Language",
     "changeLanguage": "Change language",
-    "adminPanel": "Admin panel"
+    "adminPanel": "Admin panel",
+    "editName": "Edit",
+    "saveError": "Could not save. Try again.",
+    "changePassword": "Change password",
+    "currentPasswordLabel": "Current password",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm new password",
+    "passwordMismatch": "New password and confirmation do not match.",
+    "passwordTooShort": "New password is too short.",
+    "currentPasswordWrong": "Current password is wrong.",
+    "passwordChanged": "Password changed.",
+    "changePasswordButton": "Change password"
   },
   "install": {
     "promptTitle": "Install Ratanmoti Maintenance",
@@ -240,5 +252,15 @@
     "rangeLabel": "Last {{days}} days, everyone who worked on it",
     "empty": "No maintenance logged on this machine in the last {{days}} days.",
     "recordButton": "Record a new maintenance log"
+  },
+  "nav": {
+    "home": "Home",
+    "history": "History",
+    "settings": "Settings"
+  },
+  "history": {
+    "title": "History",
+    "empty": "No logs recorded yet.",
+    "loadMore": "Load earlier days"
   }
 }

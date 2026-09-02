@@ -7,6 +7,7 @@ import { api } from '../lib/api';
 import { db } from '../lib/db';
 import type { CachedMachine, CachedShed } from '../lib/db';
 import { refreshMachines } from '../lib/machines-cache';
+import { LogListItem } from '../components/LogListItem';
 import { labelFor } from '@shared/taxonomy';
 import type { LogSummary, ShedStats, TaxonomyItemRecord } from '@shared/types';
 
@@ -205,41 +206,15 @@ function HomeInner() {
       )}
       {filteredLogs !== null && filteredLogs !== undefined && filteredLogs.length > 0 && (
         <ul className="stack-list">
-          {filteredLogs.map((log) => {
-            const text = log.transcript?.trim() || log.typedNote?.trim() || '';
-            return (
-              <li key={log.id} className="panel">
-                <Link to="/logs/$logId" params={{ logId: log.id }} className="record-link">
-                  <div className="record-time">
-                    {new Date(log.clientCreatedAt).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="meta" style={{ marginBottom: 2 }}>
-                      {log.machineNo} · {log.shedCode}
-                    </div>
-                    <div className="record-text">{text || t('capture.savedOffline')}</div>
-                    {log.items.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                        {log.items.map((item) => (
-                          <span key={item.id} className="history-pill">
-                            {labels.get(item.code) ?? item.code}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="meta" style={{ marginTop: 4 }}>
-                      {log.status === 'approved' ? t('review.approved') : log.status}
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
+          {filteredLogs.map((log) => (
+            <LogListItem key={log.id} log={log} labels={labels} lang={lang} />
+          ))}
         </ul>
       )}
+
+      <Link to="/history" className="btn btn-block btn-link" style={{ marginTop: 20 }}>
+        {t('home.viewFullHistory')}
+      </Link>
     </div>
   );
 }

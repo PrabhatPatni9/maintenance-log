@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from './lib/middleware';
 import type { Env } from './lib/env';
 import { authRoutes } from './routes/auth';
-import { resolveSession } from './lib/auth';
+import { meRoutes } from './routes/me';
 import { shedRoutes } from './routes/sheds';
 import { machineRoutes } from './routes/machines';
 import { userRoutes } from './routes/users';
@@ -18,12 +18,7 @@ const app = new Hono<AppEnv>();
 app.get('/api/config', (c) => c.json({ sttMode: c.env.STT_MODE }));
 
 app.route('/api/auth', authRoutes);
-
-app.get('/api/me', async (c) => {
-  const session = await resolveSession(c);
-  if (!session) return c.json({ error: 'unauthorized' }, 401);
-  return c.json({ user: session });
-});
+app.route('/api/me', meRoutes);
 
 app.route('/api/sheds', shedRoutes);
 app.route('/api/machines', machineRoutes);

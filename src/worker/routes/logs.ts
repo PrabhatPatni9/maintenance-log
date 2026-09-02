@@ -287,15 +287,19 @@ logRoutes.delete('/:id/purge', requireSuperAdmin, async (c) => {
 });
 
 /**
- * Today's logs for the operator's home screen. Joined out to the machine
- * and shed, and to the pills each log carries — a bare transcript string
- * told the operator nothing at a glance about which loom or what was done;
- * this is what the home screen's "at a glance" list actually needs.
+ * Home's "today" list and the full History screen's day-by-day archive are
+ * the same query with different window bounds — `since`/`before` bracket a
+ * time range, newest first, capped at `limit` (History pages backward in
+ * time with `before` on each "load more"). Joined out to the machine and
+ * shed, and to the pills each log carries — a bare transcript string told
+ * the operator nothing at a glance about which loom or what was done.
  */
 logRoutes.get('/', async (c) => {
   const session = c.get('session');
   const mine = c.req.query('mine') !== '0';
   const since = Number(c.req.query('since') ?? 0);
+  const before = Number(c.req.query('before') ?? Number.MAX_SAFE_INTEGER);
+  const limit = Math.max(1, Math.min(100, Number(c.req.query('limit') ?? 50)));
 
   const select = `
     SELECT l.*, m.machine_no, s.code AS shed_code, s.name AS shed_name
@@ -305,11 +309,11 @@ logRoutes.get('/', async (c) => {
   `;
   const stmt = mine
     ? c.env.DB.prepare(
-        `${select} WHERE l.operator_phone = ? AND l.client_created_at >= ? AND l.deleted_at IS NULL ORDER BY l.client_created_at DESC LIMIT 50`,
-      ).bind(session.phone, since)
+        `${select} WHERE l.operator_phone = ? AND l.client_created_at >= ? AND l.client_created_at < ? AND l.deleted_at IS NULL ORDER BY l.client_created_at DESC LIMIT ?`,
+      ).bind(session.phone, since, before, limit)
     : c.env.DB.prepare(
-        `${select} WHERE l.client_created_at >= ? AND l.deleted_at IS NULL ORDER BY l.client_created_at DESC LIMIT 50`,
-      ).bind(since);
+        `${select} WHERE l.client_created_at >= ? AND l.client_created_at < ? AND l.deleted_at IS NULL ORDER BY l.client_created_at DESC LIMIT ?`,
+      ).bind(since, before, limit);
 
   const { results } = await stmt.all<Record<string, unknown>>();
   const itemsByLog = await itemsByLogId(c.env.DB, results.map((r) => r.id as string));
