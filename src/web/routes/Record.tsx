@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useLang, useT } from '../i18n';
-import { RequireAuth } from '../lib/guards';
+import { RequireAuth, RequireMaintenanceAccess } from '../lib/guards';
 import { useAuth } from '../lib/auth-context';
 import { db } from '../lib/db';
 import type { CachedMachine, CachedTaxonomyItem } from '../lib/db';
@@ -271,7 +271,9 @@ function RecordInner() {
 export function Record() {
   return (
     <RequireAuth>
-      <RecordInner />
+      <RequireMaintenanceAccess>
+        <RecordInner />
+      </RequireMaintenanceAccess>
     </RequireAuth>
   );
 }

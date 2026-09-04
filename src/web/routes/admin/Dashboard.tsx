@@ -255,7 +255,7 @@ function DashboardInner() {
           <p className="meta" style={{ marginBottom: 8 }}>
             {t('admin.dashboard.dailyKwhTitle')}
           </p>
-          <SimpleBarChart data={dailyTotals} valueSuffix=" kWh" />
+          <SimpleBarChart data={dailyTotals} valueSuffix={` ${t('meters.kwhUnit')}`} />
         </div>
       )}
 
@@ -273,11 +273,11 @@ function DashboardInner() {
                   </div>
                   <div className="meta">
                     {row!.meterCode} · {row!.readingDate}
-                    {row!.pfReading !== null && ` · PF ${row!.pfReading}`}
+                    {row!.pfReading !== null && ` · ${t('meters.pfUnit')} ${row!.pfReading}`}
                   </div>
                 </div>
                 <div style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                  {row!.kwhPerMachine !== null ? `${row!.kwhPerMachine.toFixed(1)} kWh` : '—'}
+                  {row!.kwhPerMachine !== null ? `${row!.kwhPerMachine.toFixed(1)} ${t('meters.kwhUnit')}` : '—'}
                 </div>
               </li>
             ))}

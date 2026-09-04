@@ -293,6 +293,8 @@
     "saveButton": "Save reading",
     "saveError": "Could not save. Try again.",
     "savedTitle": "Saved",
-    "recentTitle": "Recent readings"
+    "recentTitle": "Recent readings",
+    "kwhUnit": "kWh",
+    "pfUnit": "PF"
   }
 }

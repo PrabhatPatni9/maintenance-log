@@ -3,6 +3,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useT } from '../i18n';
 import { RequireAuth } from '../lib/guards';
 import { api, ApiError } from '../lib/api';
+import { todayInAppTz } from '../lib/date';
 import type { Meter, MeterReading, Shed } from '@shared/types';
 
 /**
@@ -42,7 +43,7 @@ function MeterEntryInner() {
         const sorted = [...readings.readings].sort((a, b) => b.readingDate.localeCompare(a.readingDate));
         setRecent(sorted);
         const today = sorted[0];
-        const isToday = today && today.readingDate === new Date().toISOString().slice(0, 10);
+        const isToday = today && today.readingDate === todayInAppTz();
         if (isToday) {
           setKwh(String(today.kwhReading));
           if (today.pfReading !== null) setPf(String(today.pfReading));
@@ -85,7 +86,7 @@ function MeterEntryInner() {
           {t('meters.savedTitle')}
         </h1>
         <p className="meta" style={{ marginBottom: 24 }}>
-          {meter.code} · {shed?.name} · {kwh} kWh
+          {meter.code} · {shed?.name} · {kwh} {t('meters.kwhUnit')}
         </p>
         <button className="btn btn-primary btn-block" onClick={() => void navigate({ to: '/' })}>
           {t('common.done')}
@@ -148,7 +149,8 @@ function MeterEntryInner() {
               <li key={r.id} className="panel" style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between' }}>
                 <span className="meta">{r.readingDate}</span>
                 <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {r.kwhReading} kWh{r.pfReading !== null ? ` · PF ${r.pfReading}` : ''}
+                  {r.kwhReading} {t('meters.kwhUnit')}
+                  {r.pfReading !== null ? ` · ${t('meters.pfUnit')} ${r.pfReading}` : ''}
                 </span>
               </li>
             ))}

@@ -293,6 +293,8 @@
     "saveButton": "रीडिंग सेव करें",
     "saveError": "सेव नहीं हो सका। दोबारा कोशिश करें।",
     "savedTitle": "सेव हो गया",
-    "recentTitle": "हाल की रीडिंग"
+    "recentTitle": "हाल की रीडिंग",
+    "kwhUnit": "kWh",
+    "pfUnit": "PF"
   }
 }

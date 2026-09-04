@@ -43,16 +43,24 @@ meterReadingRoutes.post('/', async (c) => {
   }
 
   const readingDate = todayInTz(c.env);
-  const existing = await c.env.DB.prepare('SELECT id FROM meter_readings WHERE meter_id = ? AND reading_date = ?')
+  const existing = await c.env.DB.prepare(
+    'SELECT id, pf_reading, note FROM meter_readings WHERE meter_id = ? AND reading_date = ?',
+  )
     .bind(body.meterId, readingDate)
-    .first<{ id: string }>();
+    .first<{ id: string; pf_reading: number | null; note: string | null }>();
 
   const now = Date.now();
   if (existing) {
+    // Safe write: a field the client didn't send (the entry screen never
+    // sends `note` unless the operator typed one) keeps whatever was
+    // already there rather than being nulled out (AGENTS.md "safe write,
+    // never overwrite").
+    const pfReading = body.pfReading !== undefined ? body.pfReading : existing.pf_reading;
+    const note = body.note !== undefined ? body.note : existing.note;
     await c.env.DB.prepare(
       'UPDATE meter_readings SET kwh_reading = ?, pf_reading = ?, note = ?, recorded_by = ?, recorded_at = ? WHERE id = ?',
     )
-      .bind(body.kwhReading, body.pfReading ?? null, body.note ?? null, session.phone, now, existing.id)
+      .bind(body.kwhReading, pfReading, note, session.phone, now, existing.id)
       .run();
     const row = await c.env.DB.prepare('SELECT * FROM meter_readings WHERE id = ?')
       .bind(existing.id)
