@@ -4,6 +4,7 @@ import { api, ApiError } from '../../lib/api';
 import { deriveKeyB64, generateSaltB64 } from '../../lib/crypto';
 import { useAuth } from '../../lib/auth-context';
 import { RequireAdmin } from '../../lib/guards';
+import { PasswordField } from '../../components/PasswordField';
 import type { Role, User, Lang, Shed } from '@shared/types';
 
 const ROLE_KEY: Record<Role, string> = {
@@ -67,6 +68,13 @@ function UserRow({ u, sheds, onChanged }: { u: User; sheds: Shed[]; onChanged():
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loaded, setLoaded] = useState(false);
 
+  const [resetting, setResetting] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetDone, setResetDone] = useState(false);
+
   async function startEdit() {
     setEditing(true);
     if (!loaded) {
@@ -87,6 +95,44 @@ function UserRow({ u, sheds, onChanged }: { u: User; sheds: Shed[]; onChanged():
     onChanged();
   }
 
+  function openReset() {
+    setResetting(true);
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetError('');
+    setResetDone(false);
+  }
+
+  /** The forgotten-password path: an admin sets a fresh password on the
+   * operator's behalf, no old one needed — that is the whole point. Same
+   * client-side derivation as every other password path in the app; the
+   * server only ever sees the derived key. */
+  async function resetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setResetError('');
+    if (newPassword !== confirmPassword) {
+      setResetError(t('settings.passwordMismatch'));
+      return;
+    }
+    if (newPassword.length < 4) {
+      setResetError(t('settings.passwordTooShort'));
+      return;
+    }
+    setResetBusy(true);
+    try {
+      const salt = generateSaltB64();
+      const derivedKey = await deriveKeyB64(newPassword, salt);
+      await api.post(`/admin/users/${u.phone}/reset-password`, { salt, derivedKey });
+      setResetDone(true);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch {
+      setResetError(t('admin.users.saveError'));
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
   return (
     <li className={`panel user-row${u.active ? '' : ' is-off'}`}>
       <div className="user-row-head">
@@ -104,6 +150,9 @@ function UserRow({ u, sheds, onChanged }: { u: User; sheds: Shed[]; onChanged():
             {t('admin.users.editShedAccess')}
           </button>
         )}
+        <button className="btn btn-small" onClick={openReset}>
+          {t('admin.users.resetPassword')}
+        </button>
         <button className="btn btn-small" onClick={() => void toggleActive()}>
           {t(u.active ? 'common.deactivate' : 'common.activate')}
         </button>
@@ -120,6 +169,35 @@ function UserRow({ u, sheds, onChanged }: { u: User; sheds: Shed[]; onChanged():
               {t('common.save')}
             </button>
           </div>
+        </div>
+      )}
+
+      {resetting && (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+          <form onSubmit={resetPassword} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <PasswordField
+              label={t('settings.newPasswordLabel')}
+              value={newPassword}
+              onChange={setNewPassword}
+              autoComplete="new-password"
+            />
+            <PasswordField
+              label={t('settings.confirmPasswordLabel')}
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              autoComplete="new-password"
+            />
+            {resetError && <p style={{ color: 'var(--fault)', margin: 0 }}>{resetError}</p>}
+            {resetDone && <p style={{ color: 'var(--ink)', margin: 0 }}>{t('settings.passwordChanged')}</p>}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="button" className="btn btn-block" onClick={() => setResetting(false)}>
+                {t('common.cancel')}
+              </button>
+              <button className="btn btn-primary btn-block" type="submit" disabled={resetBusy}>
+                {t('admin.users.resetPassword')}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </li>

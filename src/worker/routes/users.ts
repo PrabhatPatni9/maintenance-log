@@ -134,6 +134,34 @@ userRoutes.post('/', async (c) => {
   );
 });
 
+/**
+ * The forgotten-password path: an admin sets a new password for someone
+ * they manage without needing the old one (that is the whole point — the
+ * operator forgot it). Same client-side PBKDF2 derivation and same
+ * canManage boundary as everywhere else here: the owner tier can reset
+ * anyone, a shed-scoped admin only an operator they personally created.
+ * This never touches shed access or role — only pass_salt/pass_hash.
+ */
+userRoutes.post('/:phone/reset-password', async (c) => {
+  const phone = c.req.param('phone');
+  const session = c.get('session');
+  const body = await c.req.json<{ salt: string; derivedKey: string }>();
+  if (!body.salt || !body.derivedKey) return c.json({ error: 'missing fields' }, 400);
+
+  const target = await c.env.DB.prepare('SELECT role, created_by FROM users WHERE phone = ?')
+    .bind(phone)
+    .first<{ role: string; created_by: unknown }>();
+  if (!target) return c.json({ error: 'not found' }, 404);
+  if (!canManage(session, target)) return c.json({ error: 'forbidden' }, 403);
+
+  const passHash = await hashDerivedKey(body.derivedKey);
+  await c.env.DB.prepare('UPDATE users SET pass_salt = ?, pass_hash = ? WHERE phone = ?')
+    .bind(body.salt, passHash, phone)
+    .run();
+
+  return c.json({ ok: true });
+});
+
 userRoutes.patch('/:phone', async (c) => {
   const phone = c.req.param('phone');
   const session = c.get('session');

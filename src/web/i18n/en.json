@@ -156,7 +156,8 @@
       "hintOwner": "Create any account. Admins and operators are shed-scoped once you pick which sheds they can see.",
       "hintAdmin": "Add operators and share access to your own sheds with them. You can only manage operators you added yourself.",
       "saveError": "Could not save. Try again.",
-      "empty": "No operators added yet. Add the first one above."
+      "empty": "No operators added yet. Add the first one above.",
+      "resetPassword": "Reset password"
     },
     "taxonomy": {
       "title": "Taxonomy",
