@@ -10,13 +10,14 @@ import type { Role, User, Lang, Shed } from '@shared/types';
 const ROLE_KEY: Record<Role, string> = {
   super_admin: 'admin.users.roleSuperAdmin',
   admin: 'admin.users.roleAdmin',
+  utility_operator: 'admin.users.roleUtilityOperator',
   operator: 'admin.users.roleOperator',
 };
 
-/** Only these two tiers are shed-scoped; super_admin sees every shed with no
- * grant needed, so there is nothing to check boxes for. */
+/** Every tier but the owner is shed-scoped; super_admin sees every shed
+ * with no grant needed, so there is nothing to check boxes for. */
 function isShedScoped(role: Role): boolean {
-  return role === 'operator' || role === 'admin';
+  return role === 'operator' || role === 'utility_operator' || role === 'admin';
 }
 
 function ShedCheckboxes({
@@ -212,9 +213,9 @@ function UsersInner() {
   const [sheds, setSheds] = useState<Shed[]>([]);
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
-  // A shed-scoped admin can only ever add an operator (CLAUDE.md's role
-  // model: "Admins can only add operators"), so the role picker itself only
-  // exists for the owner tier — there is nothing else to choose otherwise.
+  // A shed-scoped admin can add an operator or a utility_operator (the
+  // electrician) — never another admin or the owner tier, so their picker
+  // offers exactly those two. The owner tier's picker offers all four.
   const [role, setRole] = useState<Role>('operator');
   const [lang, setLang] = useState<Lang>('hi');
   const [password, setPassword] = useState('');
@@ -238,8 +239,7 @@ function UsersInner() {
     try {
       const salt = generateSaltB64();
       const derivedKey = await deriveKeyB64(password, salt);
-      const effectiveRole = isSuperAdmin ? role : 'operator';
-      await api.post('/admin/users', { phone, name, role: effectiveRole, lang, salt, derivedKey, shedIds: [...shedIds] });
+      await api.post('/admin/users', { phone, name, role, lang, salt, derivedKey, shedIds: [...shedIds] });
       setPhone('');
       setName('');
       setPassword('');
@@ -276,23 +276,15 @@ function UsersInner() {
         </div>
 
         <div className="field-pair">
-          {isSuperAdmin ? (
-            <div>
-              <label className="field-label">{t('admin.users.roleLabel')}</label>
-              <select className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-                <option value="operator">{t('admin.users.roleOperator')}</option>
-                <option value="admin">{t('admin.users.roleAdmin')}</option>
-                <option value="super_admin">{t('admin.users.roleSuperAdmin')}</option>
-              </select>
-            </div>
-          ) : (
-            <div>
-              <label className="field-label">{t('admin.users.roleLabel')}</label>
-              <div className="input" style={{ color: 'var(--steel)' }}>
-                {t('admin.users.roleOperator')}
-              </div>
-            </div>
-          )}
+          <div>
+            <label className="field-label">{t('admin.users.roleLabel')}</label>
+            <select className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}>
+              <option value="operator">{t('admin.users.roleOperator')}</option>
+              <option value="utility_operator">{t('admin.users.roleUtilityOperator')}</option>
+              {isSuperAdmin && <option value="admin">{t('admin.users.roleAdmin')}</option>}
+              {isSuperAdmin && <option value="super_admin">{t('admin.users.roleSuperAdmin')}</option>}
+            </select>
+          </div>
           <div>
             <label className="field-label">{t('settings.languageLabel')}</label>
             <select className="input" value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
@@ -314,9 +306,7 @@ function UsersInner() {
           />
         </div>
 
-        {isShedScoped(isSuperAdmin ? role : 'operator') && (
-          <ShedCheckboxes sheds={sheds} selected={shedIds} onChange={setShedIds} />
-        )}
+        {isShedScoped(role) && <ShedCheckboxes sheds={sheds} selected={shedIds} onChange={setShedIds} />}
 
         {addError && <p style={{ color: 'var(--fault)', margin: 0 }}>{addError}</p>}
 

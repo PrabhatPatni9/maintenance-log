@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useT } from '../i18n';
-import { RequireAuth } from '../lib/guards';
+import { RequireAuth, RequireMaintenanceAccess } from '../lib/guards';
 import { db } from '../lib/db';
 import type { CachedMachine, CachedShed } from '../lib/db';
 import { refreshMachines } from '../lib/machines-cache';
@@ -131,7 +131,9 @@ function MachinePickerInner() {
 export function MachinePicker() {
   return (
     <RequireAuth>
-      <MachinePickerInner />
+      <RequireMaintenanceAccess>
+        <MachinePickerInner />
+      </RequireMaintenanceAccess>
     </RequireAuth>
   );
 }

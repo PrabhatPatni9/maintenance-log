@@ -5,6 +5,8 @@ import { authRoutes } from './routes/auth';
 import { meRoutes } from './routes/me';
 import { shedRoutes } from './routes/sheds';
 import { machineRoutes } from './routes/machines';
+import { meterRoutes } from './routes/meters';
+import { meterReadingRoutes } from './routes/meter-readings';
 import { userRoutes } from './routes/users';
 import { taxonomyRoutes } from './routes/taxonomy';
 import { logRoutes } from './routes/logs';
@@ -22,6 +24,8 @@ app.route('/api/me', meRoutes);
 
 app.route('/api/sheds', shedRoutes);
 app.route('/api/machines', machineRoutes);
+app.route('/api/meters', meterRoutes);
+app.route('/api/meter-readings', meterReadingRoutes);
 app.route('/api/admin/users', userRoutes);
 app.route('/api/taxonomy', taxonomyRoutes);
 app.route('/api/logs', logRoutes);

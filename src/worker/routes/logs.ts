@@ -39,6 +39,11 @@ interface CreateLogBody {
 logRoutes.post('/', async (c) => {
   const body = await c.req.json<CreateLogBody>();
   const session = c.get('session');
+  // The electrician's job is meters, not maintenance notes — same
+  // separation of concerns as meter-readings.ts's canRecordReadings, just
+  // the other direction. Admin and super_admin can still cover for an
+  // absent operator.
+  if (session.role === 'utility_operator') return c.json({ error: 'forbidden' }, 403);
 
   const existing = await c.env.DB.prepare('SELECT id FROM logs WHERE id = ?')
     .bind(body.id)

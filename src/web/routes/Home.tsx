@@ -12,6 +12,7 @@ import { labelFor } from '@shared/taxonomy';
 import type { LogSummary, ShedStats, TaxonomyItemRecord } from '@shared/types';
 
 const PRESELECT_KEY = 'preselectedShedId';
+const METER_PRESELECT_KEY = 'preselectedMeterShedId';
 
 function HomeInner() {
   const t = useT();
@@ -106,6 +107,19 @@ function HomeInner() {
     void navigate({ to: '/machine' });
   }
 
+  // Same shortcut, into the meter-picking flow instead — a utility_operator
+  // has no maintenance flow at all (that is not their job), and an
+  // admin/super_admin need a way into both since either tier can fill in
+  // "whenever the electrician is absent."
+  function logMeterAt(shedId?: string) {
+    if (shedId) sessionStorage.setItem(METER_PRESELECT_KEY, shedId);
+    else sessionStorage.removeItem(METER_PRESELECT_KEY);
+    void navigate({ to: '/meter' });
+  }
+
+  const showMaintenanceFlow = user?.role !== 'utility_operator';
+  const showMeterFlow = user?.role === 'utility_operator' || user?.role === 'admin' || user?.role === 'super_admin';
+
   return (
     <div className="screen">
       <p className="meta" style={{ marginBottom: 16 }}>
@@ -165,56 +179,86 @@ function HomeInner() {
         </div>
       )}
 
-      {sheds.length <= 1 ? (
-        <button className="btn btn-amber btn-block record-cta" onClick={() => recordAt()}>
-          {t('home.recordButton')}
-        </button>
-      ) : (
+      {showMaintenanceFlow && (
         <>
-          <h2 className="dash-section-title" style={{ marginTop: 0 }}>
-            {t('home.chooseShedTitle')}
-          </h2>
-          <div className="home-shed-grid">
-            {sheds.map((s) => (
-              <button key={s.id} className="home-shed-card" onClick={() => recordAt(s.id)}>
-                <span className="shed-badge">{s.code}</span>
-                <span className="home-shed-name">{s.name}</span>
-              </button>
-            ))}
-          </div>
+          {sheds.length <= 1 ? (
+            <button className="btn btn-amber btn-block record-cta" onClick={() => recordAt()}>
+              {t('home.recordButton')}
+            </button>
+          ) : (
+            <>
+              <h2 className="dash-section-title" style={{ marginTop: 0 }}>
+                {t('home.chooseShedTitle')}
+              </h2>
+              <div className="home-shed-grid">
+                {sheds.map((s) => (
+                  <button key={s.id} className="home-shed-card" onClick={() => recordAt(s.id)}>
+                    <span className="shed-badge">{s.code}</span>
+                    <span className="home-shed-name">{s.name}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
 
-      <h2 className="screen-title" style={{ fontSize: 18, margin: '32px 0 12px' }}>
-        {t('home.todayLogsTitle')}
-      </h2>
-
-      {logs !== null && logs.length > 0 && (
-        <input
-          className="input"
-          style={{ marginBottom: 12 }}
-          placeholder={t('home.searchLogsPlaceholder')}
-          value={logQuery}
-          onChange={(e) => setLogQuery(e.target.value)}
-        />
+      {showMeterFlow && (
+        <>
+          <h2 className="dash-section-title" style={{ marginTop: showMaintenanceFlow ? 24 : 0 }}>
+            {t('home.chooseShedMeterTitle')}
+          </h2>
+          {sheds.length <= 1 ? (
+            <button className="btn btn-amber btn-block record-cta" onClick={() => logMeterAt()}>
+              {t('home.meterButton')}
+            </button>
+          ) : (
+            <div className="home-shed-grid">
+              {sheds.map((s) => (
+                <button key={s.id} className="home-shed-card" onClick={() => logMeterAt(s.id)}>
+                  <span className="shed-badge">{s.code}</span>
+                  <span className="home-shed-name">{s.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
-      {logs === null && <p className="meta">{t('common.loading')}</p>}
-      {logs !== null && logs.length === 0 && <p className="meta">{t('home.noLogsToday')}</p>}
-      {logs !== null && logs.length > 0 && filteredLogs?.length === 0 && (
-        <p className="meta">{t('home.noLogsMatch', { query: logQuery })}</p>
-      )}
-      {filteredLogs !== null && filteredLogs !== undefined && filteredLogs.length > 0 && (
-        <ul className="stack-list">
-          {filteredLogs.map((log) => (
-            <LogListItem key={log.id} log={log} labels={labels} lang={lang} />
-          ))}
-        </ul>
-      )}
+      {showMaintenanceFlow && (
+        <>
+          <h2 className="screen-title" style={{ fontSize: 18, margin: '32px 0 12px' }}>
+            {t('home.todayLogsTitle')}
+          </h2>
 
-      <Link to="/history" className="btn btn-block btn-link" style={{ marginTop: 20 }}>
-        {t('home.viewFullHistory')}
-      </Link>
+          {logs !== null && logs.length > 0 && (
+            <input
+              className="input"
+              style={{ marginBottom: 12 }}
+              placeholder={t('home.searchLogsPlaceholder')}
+              value={logQuery}
+              onChange={(e) => setLogQuery(e.target.value)}
+            />
+          )}
+
+          {logs === null && <p className="meta">{t('common.loading')}</p>}
+          {logs !== null && logs.length === 0 && <p className="meta">{t('home.noLogsToday')}</p>}
+          {logs !== null && logs.length > 0 && filteredLogs?.length === 0 && (
+            <p className="meta">{t('home.noLogsMatch', { query: logQuery })}</p>
+          )}
+          {filteredLogs !== null && filteredLogs !== undefined && filteredLogs.length > 0 && (
+            <ul className="stack-list">
+              {filteredLogs.map((log) => (
+                <LogListItem key={log.id} log={log} labels={labels} lang={lang} />
+              ))}
+            </ul>
+          )}
+
+          <Link to="/history" className="btn btn-block btn-link" style={{ marginTop: 20 }}>
+            {t('home.viewFullHistory')}
+          </Link>
+        </>
+      )}
     </div>
   );
 }
