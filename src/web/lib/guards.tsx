@@ -35,13 +35,31 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-/** Everyone but the electrician — a utility_operator's job is meters, not
- * maintenance notes (mirrors the server-side check in logs.ts's POST /).
- * Bouncing them to Home rather than a dead end if they land here directly. */
+/** Everyone except a utility-only operator (isUtility but not isOperator) —
+ * mirrors the server-side check in logs.ts's POST /. Bouncing them to Home
+ * rather than a dead end if they land here directly. */
 export function RequireMaintenanceAccess({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const allowed = Boolean(user) && user?.role !== 'utility_operator';
+  const allowed = Boolean(user?.isOperator);
+
+  useEffect(() => {
+    if (!loading && !allowed) void navigate({ to: '/' });
+  }, [loading, allowed, navigate]);
+
+  const t = useT();
+  if (loading) return <p className="meta">{t('common.loading')}</p>;
+  if (!allowed) return null;
+  return <>{children}</>;
+}
+
+/** Everyone except a pure maintenance operator (isOperator but not
+ * isUtility) — mirrors the server-side check in meter-readings.ts's POST /.
+ * Bouncing them to Home rather than a dead end if they land here directly. */
+export function RequireUtilityAccess({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const allowed = Boolean(user?.isUtility);
 
   useEffect(() => {
     if (!loading && !allowed) void navigate({ to: '/' });

@@ -20,6 +20,8 @@ export interface SessionRecord {
   phone: string;
   name: string;
   role: Role;
+  isOperator: boolean;
+  isUtility: boolean;
   lang: Lang;
 }
 

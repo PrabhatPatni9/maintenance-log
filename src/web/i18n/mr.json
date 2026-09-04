@@ -51,6 +51,7 @@
     "myLogsTitle": "माझे लॉग",
     "viewAll": "सर्व पहा",
     "chooseShedTitle": "रेकॉर्ड करण्यासाठी शेड निवडा",
+    "chooseShedGenericTitle": "शेड निवडा",
     "searchPlaceholder": "मशीन नंबर किंवा शेड शोधा",
     "searchNoMatch": "\"{{query}}\" शी जुळणारी मशीन किंवा शेड नाही",
     "shedStatsMachines": "{{code}} मध्ये तुम्ही काम केलेल्या मशीन्स: {{count}}",
@@ -160,7 +161,10 @@
       "saveError": "सेव्ह होऊ शकले नाही. पुन्हा प्रयत्न करा.",
       "empty": "अजून कोणताही ऑपरेटर जोडलेला नाही. वर पहिला जोडा.",
       "resetPassword": "पासवर्ड रीसेट करा",
-      "roleUtilityOperator": "युटिलिटी ऑपरेटर (इलेक्ट्रिशियन)"
+      "roleUtilityOperator": "युटिलिटी ऑपरेटर (इलेक्ट्रिशियन)",
+      "jobsLabel": "काम (किमान एक निवडा)",
+      "pickAtLeastOneJob": "किमान एक काम निवडा.",
+      "editRole": "रोल बदला"
     },
     "taxonomy": {
       "title": "टॅक्सोनॉमी",
@@ -232,6 +236,31 @@
       "machinesOnThis": "मशीन्स या मीटरवर",
       "assignMachines": "मशीन्स असाइन करा",
       "onAnotherMeter": "{{code}} वर आहे"
+    },
+    "webhooksTab": "इंटिग्रेशन",
+    "webhooks": {
+      "title": "इंटिग्रेशन",
+      "hint": "प्रत्येक मंजूर मेंटेनन्स लॉग आणि प्रत्येक मीटर रीडिंग तुम्ही दिलेल्या URL वर पाठवा — Google Sheet मध्ये डेटा आणण्यासाठी सहसा Google Apps Script Web App योग्य ठरतो. फक्त ओनर टियरसाठी, कारण वेबहुक URL शेडचा डेटा कुठेही पाठवू शकतो.",
+      "scopeLabel": "स्कोप",
+      "scopeGlobal": "प्रत्येक शेड",
+      "scopeShedOption": "एक शेड",
+      "scopeMachineOption": "एक मशीन",
+      "scopeShed": "शेड: {{name}}",
+      "scopeMachine": "मशीन: {{name}}",
+      "urlLabel": "वेबहुक URL",
+      "addWebhook": "वेबहुक जोडा",
+      "saveError": "सेव्ह होऊ शकले नाही. पुन्हा प्रयत्न करा.",
+      "secretTitle": "सायनिंग सीक्रेट",
+      "secretHint": "हे आत्ताच कॉपी करा — हे पुन्हा दिसणार नाही. प्रत्येक डिलिव्हरी यानेच साइन होते (HMAC-SHA256, हेडर X-Webhook-Signature) जेणेकरून तुमची स्क्रिप्ट खात्री करू शकेल की हे इथूनच आले आहे.",
+      "secretDismiss": "मी कॉपी केले",
+      "neverFired": "अजून कोणतीही डिलिव्हरी झालेली नाही.",
+      "lastOk": "शेवटची डिलिव्हरी {{when}} · HTTP {{status}}",
+      "lastError": "शेवटची डिलिव्हरी {{when}} · अयशस्वी: {{error}}",
+      "test": "टेस्ट पाठवा",
+      "testOk": "टेस्ट डिलिव्हर झाली · HTTP {{status}}",
+      "testFailed": "टेस्ट अयशस्वी: {{error}}",
+      "deleteConfirm": "वेबहुक \"{{url}}\" काढायचे? हे लगेच डेटा मिळणे बंद करेल.",
+      "empty": "अजून कोणतेही वेबहुक कॉन्फिगर केलेले नाही."
     }
   },
   "settings": {

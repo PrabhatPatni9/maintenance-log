@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useT } from '../i18n';
-import { RequireAuth } from '../lib/guards';
+import { RequireAuth, RequireUtilityAccess } from '../lib/guards';
 import { api, ApiError } from '../lib/api';
 import { todayInAppTz } from '../lib/date';
 import type { Meter, MeterReading, Shed } from '@shared/types';
@@ -164,7 +164,9 @@ function MeterEntryInner() {
 export function MeterEntry() {
   return (
     <RequireAuth>
-      <MeterEntryInner />
+      <RequireUtilityAccess>
+        <MeterEntryInner />
+      </RequireUtilityAccess>
     </RequireAuth>
   );
 }

@@ -15,6 +15,8 @@ import type {
   Shed,
   TaxonomyItemRecord,
   User,
+  Webhook,
+  WebhookScope,
 } from '@shared/types';
 
 // D1 rows come back snake_case; the shared contract is camelCase. These
@@ -84,27 +86,45 @@ export function mapMeterReadingEdit(r: Record<string, unknown>): MeterReadingEdi
 }
 
 /**
- * `role` is 'admin' | 'operator' at the DB level — `super_admin` and
- * `utility_operator` could not be added as CHECK values without recreating
- * the users table, which D1 refuses while other tables hold a foreign key
- * into it (see migration 0004's comment). Both extra tiers are flags on top
- * instead: `role='admin'` + `is_super_admin=1` is the owner tier,
- * `role='operator'` + `is_utility=1` is the electrician tier. This mapper is
- * the one place that folds the three DB columns back into the app's
- * four-way Role.
+ * `role` is 'admin' | 'operator' at the DB level — `super_admin` could not be
+ * added as a CHECK value without recreating the users table, which D1
+ * refuses while other tables hold a foreign key into it (see migration
+ * 0004's comment). The owner tier is `role='admin'` + `is_super_admin=1`.
+ * `is_operator`/`is_utility` are independent job flags on the `operator`
+ * tier (migration 0006) — admin and super_admin always report both true,
+ * since either can stand in for an absent operator or electrician. This
+ * mapper is the one place that folds the DB columns back into the app's
+ * three-way Role plus its two capability flags.
  */
 export function mapUser(r: Record<string, unknown>): User {
   const dbRole = r.role as 'admin' | 'operator';
-  let role: Role = dbRole;
-  if (dbRole === 'admin' && Boolean(r.is_super_admin)) role = 'super_admin';
-  else if (dbRole === 'operator' && Boolean(r.is_utility)) role = 'utility_operator';
+  const role: Role = dbRole === 'admin' && Boolean(r.is_super_admin) ? 'super_admin' : dbRole;
   return {
     phone: r.phone as string,
     name: r.name as string,
     role,
+    isOperator: role === 'operator' ? Boolean(r.is_operator) : true,
+    isUtility: role === 'operator' ? Boolean(r.is_utility) : true,
     lang: r.lang as Lang,
     active: Boolean(r.active),
     createdAt: r.created_at as number,
+  };
+}
+
+/** `secret` is never read back from the row here — see webhooks.ts's list
+ * route, which selects every column except it. */
+export function mapWebhook(r: Record<string, unknown>): Webhook {
+  return {
+    id: r.id as string,
+    scopeType: r.scope_type as WebhookScope,
+    scopeId: (r.scope_id as string | null) ?? null,
+    url: r.url as string,
+    active: Boolean(r.active),
+    createdBy: r.created_by as string,
+    createdAt: r.created_at as number,
+    lastFiredAt: (r.last_fired_at as number | null) ?? null,
+    lastStatus: (r.last_status as number | null) ?? null,
+    lastError: (r.last_error as string | null) ?? null,
   };
 }
 

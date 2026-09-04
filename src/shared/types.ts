@@ -6,19 +6,21 @@
 export type Lang = 'en' | 'hi' | 'mr';
 
 /**
- * Four tiers. `operator` records maintenance logs. `utility_operator` is the
- * electrician's tier: shed-scoped the same way as `operator` (same
- * `user_sheds` grant), but logs daily meter readings (kWh/PF) instead of
- * maintenance notes — a separate job, not a variant of the operator one.
- * `admin` is the shed-level supervisor: manages meters and taxonomy within
- * sheds they were granted, can act as either operator or utility_operator
- * themselves when one is absent, sees history and the dashboard for their
- * own sheds. `super_admin` is the owner tier: creates every account
- * (including other admins), creates/removes sheds and machines, sees every
- * shed with no scoping, and is the only role that can permanently purge a
- * log or restore one an admin soft-deleted.
+ * Three tiers, plus two independent job capabilities for the `operator`
+ * tier. `operator` is the shed-scoped floor tier; whether a given operator
+ * records maintenance logs, daily meter readings (kWh/PF), or both is the
+ * `isOperator`/`isUtility` flags on `User`, not the tier itself — a person
+ * can hold either job, both, or be moved between them by an admin without
+ * changing tier. `admin` is the shed-level supervisor: manages meters and
+ * taxonomy within sheds they were granted, can act as either job themselves
+ * when someone is absent (both flags always read true for admin and
+ * super_admin — there is nothing to toggle), sees history and the dashboard
+ * for their own sheds. `super_admin` is the owner tier: creates every
+ * account (including other admins), creates/removes sheds and machines,
+ * sees every shed with no scoping, and is the only role that can
+ * permanently purge a log or restore one an admin soft-deleted.
  */
-export type Role = 'super_admin' | 'admin' | 'utility_operator' | 'operator';
+export type Role = 'super_admin' | 'admin' | 'operator';
 
 export type LogStatus =
   | 'pending_transcription'
@@ -109,10 +111,16 @@ export interface MeterConsumptionRow {
   kwhPerMachine: number | null;
 }
 
+/** `isOperator`/`isUtility` are always true for `admin` and `super_admin` —
+ * both jobs, nothing to toggle. For `operator` they reflect the two flags on
+ * the DB row; at least one is always true (a capability-less operator
+ * account cannot be created or edited into existing — see users.ts). */
 export interface User {
   phone: string;
   name: string;
   role: Role;
+  isOperator: boolean;
+  isUtility: boolean;
   lang: Lang;
   active: boolean;
   createdAt: number;
@@ -214,6 +222,24 @@ export interface MachineHistoryResponse {
 export interface ShedStats {
   machinesWorkedOn: number;
   logCount: number;
+}
+
+export type WebhookScope = 'global' | 'shed' | 'machine';
+
+/** Never carries `secret` except in the one response right after creation —
+ * every other read (list, edit) treats it like a password: write-only after
+ * that point. */
+export interface Webhook {
+  id: string;
+  scopeType: WebhookScope;
+  scopeId: string | null;
+  url: string;
+  active: boolean;
+  createdBy: string;
+  createdAt: number;
+  lastFiredAt: number | null;
+  lastStatus: number | null;
+  lastError: string | null;
 }
 
 export interface LogDetail extends LogRecord {

@@ -734,23 +734,23 @@ a:focus-visible {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
 }
 
 .stat-tile {
-  padding: 14px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
   background: var(--panel);
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .dash-section-title {
@@ -810,6 +810,10 @@ a:focus-visible {
   -webkit-overflow-scrolling: touch;
   border-bottom: 1px solid var(--line);
   padding: 0 8px;
+  /* Edge fade hints there's more to scroll to — the strip has more tabs
+     than fit on a phone width and nothing else here signals that. */
+  mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
 }
 
 .admin-nav-item {

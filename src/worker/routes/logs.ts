@@ -9,6 +9,7 @@ import { transcribeLog } from '../lib/transcribe';
 import { selectProvider } from '../stt/select';
 import { canAccessShed } from '../lib/shed-access';
 import { itemsByLogId } from '../lib/log-items';
+import { fireLogApprovedWebhook } from '../lib/webhooks';
 import type { Lang, SegmentSource, ItemOrigin } from '@shared/types';
 
 export const logRoutes = new Hono<AppEnv>();
@@ -39,11 +40,11 @@ interface CreateLogBody {
 logRoutes.post('/', async (c) => {
   const body = await c.req.json<CreateLogBody>();
   const session = c.get('session');
-  // The electrician's job is meters, not maintenance notes — same
-  // separation of concerns as meter-readings.ts's canRecordReadings, just
-  // the other direction. Admin and super_admin can still cover for an
-  // absent operator.
-  if (session.role === 'utility_operator') return c.json({ error: 'forbidden' }, 403);
+  // A utility-only operator (isUtility but not isOperator) has no
+  // maintenance job — same separation of concerns as meter-readings.ts's
+  // isUtility check, just the other flag. Admin and super_admin always
+  // report isOperator true (mapUser), so they're never blocked here.
+  if (!session.isOperator) return c.json({ error: 'forbidden' }, 403);
 
   const existing = await c.env.DB.prepare('SELECT id FROM logs WHERE id = ?')
     .bind(body.id)
@@ -94,6 +95,10 @@ logRoutes.post('/', async (c) => {
       );
     }
     if (statements.length > 0) await c.env.DB.batch(statements);
+
+    if (status === 'approved') {
+      c.executionCtx.waitUntil(fireLogApprovedWebhook(c.env, body.id).catch(() => {}));
+    }
   }
 
   return c.json({ ok: true, id: body.id }, 201);
@@ -182,6 +187,8 @@ logRoutes.post('/:id/approve', async (c) => {
   await c.env.DB.prepare('UPDATE logs SET status = ?, approved_at = ? WHERE id = ?')
     .bind('approved', Date.now(), logId)
     .run();
+
+  c.executionCtx.waitUntil(fireLogApprovedWebhook(c.env, logId).catch(() => {}));
 
   return c.json({ ok: true });
 });

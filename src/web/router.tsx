@@ -22,6 +22,7 @@ const AdminShell = lazyRouteComponent(() => import('./routes/admin/AdminShell'),
 const Sheds = lazyRouteComponent(() => import('./routes/admin/Sheds'), 'Sheds');
 const Machines = lazyRouteComponent(() => import('./routes/admin/Machines'), 'Machines');
 const Meters = lazyRouteComponent(() => import('./routes/admin/Meters'), 'Meters');
+const Webhooks = lazyRouteComponent(() => import('./routes/admin/Webhooks'), 'Webhooks');
 const Users = lazyRouteComponent(() => import('./routes/admin/Users'), 'Users');
 const Taxonomy = lazyRouteComponent(() => import('./routes/admin/Taxonomy'), 'Taxonomy');
 const History = lazyRouteComponent(() => import('./routes/admin/History'), 'History');
@@ -80,6 +81,7 @@ const adminIndexRoute = createRoute({
 const adminShedsRoute = createRoute({ getParentRoute: () => adminRoute, path: '/sheds', component: Sheds });
 const adminMachinesRoute = createRoute({ getParentRoute: () => adminRoute, path: '/machines', component: Machines });
 const adminMetersRoute = createRoute({ getParentRoute: () => adminRoute, path: '/meters', component: Meters });
+const adminWebhooksRoute = createRoute({ getParentRoute: () => adminRoute, path: '/webhooks', component: Webhooks });
 const adminUsersRoute = createRoute({ getParentRoute: () => adminRoute, path: '/users', component: Users });
 const adminTaxonomyRoute = createRoute({ getParentRoute: () => adminRoute, path: '/taxonomy', component: Taxonomy });
 const adminHistoryRoute = createRoute({ getParentRoute: () => adminRoute, path: '/history', component: History });
@@ -102,6 +104,7 @@ const routeTree = rootRoute.addChildren([
     adminShedsRoute,
     adminMachinesRoute,
     adminMetersRoute,
+    adminWebhooksRoute,
     adminUsersRoute,
     adminTaxonomyRoute,
     adminHistoryRoute,

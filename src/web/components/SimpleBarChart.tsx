@@ -20,13 +20,18 @@ export function SimpleBarChart({
   valueSuffix?: string;
 }) {
   if (data.length === 0) return null;
+  // A meter correction or replacement can make a day's derived consumption
+  // come out negative (see meter-readings.ts's PATCH) — clamped to 0 for
+  // display rather than an invalid negative SVG height (the browser drops
+  // the whole <rect> silently, which just looks like a missing bar, but
+  // still throws in the console).
   const max = Math.max(...data.map((d) => d.value), 1);
   const barW = Math.max(4, width / data.length - BAR_GAP);
 
   return (
     <svg width="100%" viewBox={`0 0 ${width} ${HEIGHT + LABEL_H}`} style={{ display: 'block' }}>
       {data.map((d, i) => {
-        const barH = (d.value / max) * (HEIGHT - 18);
+        const barH = Math.max(0, (d.value / max) * (HEIGHT - 18));
         const x = i * (barW + BAR_GAP);
         const y = HEIGHT - barH;
         return (

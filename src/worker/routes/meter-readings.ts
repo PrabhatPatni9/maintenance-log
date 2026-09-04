@@ -4,17 +4,11 @@ import { requireAdmin, requireAuth } from '../lib/middleware';
 import { mapMeterReading } from '../lib/mappers';
 import { accessibleShedIds, canAccessShed } from '../lib/shed-access';
 import { todayInTz } from '../lib/date';
+import { fireMeterReadingWebhook } from '../lib/webhooks';
 import { uuidv7 } from '@shared/id';
 
 export const meterReadingRoutes = new Hono<AppEnv>();
 meterReadingRoutes.use('*', requireAuth);
-
-/** utility_operator, admin and super_admin can log a reading — a plain
- * maintenance operator has no business here, same separation of concerns
- * as the two roles doing two different jobs. */
-function canRecordReadings(role: string): boolean {
-  return role === 'utility_operator' || role === 'admin' || role === 'super_admin';
-}
 
 /**
  * Today's reading for one meter — always "today" in the shed's own
@@ -27,7 +21,10 @@ function canRecordReadings(role: string): boolean {
  */
 meterReadingRoutes.post('/', async (c) => {
   const session = c.get('session');
-  if (!canRecordReadings(session.role)) return c.json({ error: 'forbidden' }, 403);
+  // A pure maintenance operator (isOperator but not isUtility) has no
+  // electrical job — admin and super_admin always report isUtility true
+  // (mapUser), so they're never blocked here.
+  if (!session.isUtility) return c.json({ error: 'forbidden' }, 403);
 
   const body = await c.req.json<{ meterId: string; kwhReading: number; pfReading?: number | null; note?: string }>();
   if (!body.meterId || typeof body.kwhReading !== 'number') {
@@ -62,6 +59,7 @@ meterReadingRoutes.post('/', async (c) => {
     )
       .bind(body.kwhReading, pfReading, note, session.phone, now, existing.id)
       .run();
+    c.executionCtx.waitUntil(fireMeterReadingWebhook(c.env, existing.id).catch(() => {}));
     const row = await c.env.DB.prepare('SELECT * FROM meter_readings WHERE id = ?')
       .bind(existing.id)
       .first<Record<string, unknown>>();
@@ -75,6 +73,7 @@ meterReadingRoutes.post('/', async (c) => {
   )
     .bind(id, body.meterId, readingDate, body.kwhReading, body.pfReading ?? null, body.note ?? null, session.phone, now)
     .run();
+  c.executionCtx.waitUntil(fireMeterReadingWebhook(c.env, id).catch(() => {}));
 
   const row = await c.env.DB.prepare('SELECT * FROM meter_readings WHERE id = ?')
     .bind(id)
@@ -115,6 +114,7 @@ meterReadingRoutes.get('/meter/:meterId', async (c) => {
  */
 meterReadingRoutes.patch('/:id', requireAdmin, async (c) => {
   const id = c.req.param('id');
+  if (!id) return c.json({ error: 'not found' }, 404);
   const session = c.get('session');
   const body = await c.req.json<{ kwhReading?: number; pfReading?: number | null; reason: string }>();
   if (!body.reason?.trim()) return c.json({ error: 'reason required' }, 400);
@@ -152,6 +152,7 @@ meterReadingRoutes.patch('/:id', requireAdmin, async (c) => {
     ),
   ];
   await c.env.DB.batch(statements);
+  c.executionCtx.waitUntil(fireMeterReadingWebhook(c.env, id).catch(() => {}));
 
   const row = await c.env.DB.prepare('SELECT * FROM meter_readings WHERE id = ?')
     .bind(id)

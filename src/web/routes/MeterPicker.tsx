@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useT } from '../i18n';
-import { RequireAuth } from '../lib/guards';
+import { RequireAuth, RequireUtilityAccess } from '../lib/guards';
 import { api } from '../lib/api';
 import type { Meter, Shed } from '@shared/types';
 
@@ -98,7 +98,9 @@ function MeterPickerInner() {
 export function MeterPicker() {
   return (
     <RequireAuth>
-      <MeterPickerInner />
+      <RequireUtilityAccess>
+        <MeterPickerInner />
+      </RequireUtilityAccess>
     </RequireAuth>
   );
 }

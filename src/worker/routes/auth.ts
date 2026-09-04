@@ -33,7 +33,14 @@ authRoutes.post('/login', async (c) => {
   if (hash !== row.pass_hash) return c.json({ error: 'invalid credentials' }, 401);
 
   const user = mapUser(row);
-  await createSession(c, { phone: user.phone, name: user.name, role: user.role, lang: user.lang });
+  await createSession(c, {
+    phone: user.phone,
+    name: user.name,
+    role: user.role,
+    isOperator: user.isOperator,
+    isUtility: user.isUtility,
+    lang: user.lang,
+  });
   return c.json({ user });
 });
 

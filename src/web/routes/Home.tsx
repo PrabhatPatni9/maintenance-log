@@ -107,18 +107,31 @@ function HomeInner() {
     void navigate({ to: '/machine' });
   }
 
-  // Same shortcut, into the meter-picking flow instead — a utility_operator
-  // has no maintenance flow at all (that is not their job), and an
-  // admin/super_admin need a way into both since either tier can fill in
-  // "whenever the electrician is absent."
+  // Same shortcut, into the meter-picking flow instead — shown to anyone
+  // with the utility job (isUtility), which now includes a dual-role
+  // operator and always includes admin/super_admin (either can fill in
+  // "whenever the electrician is absent").
   function logMeterAt(shedId?: string) {
     if (shedId) sessionStorage.setItem(METER_PRESELECT_KEY, shedId);
     else sessionStorage.removeItem(METER_PRESELECT_KEY);
     void navigate({ to: '/meter' });
   }
 
-  const showMaintenanceFlow = user?.role !== 'utility_operator';
-  const showMeterFlow = user?.role === 'utility_operator' || user?.role === 'admin' || user?.role === 'super_admin';
+  const showMaintenanceFlow = Boolean(user?.isOperator);
+  const showMeterFlow = Boolean(user?.isUtility);
+  const bothFlows = showMaintenanceFlow && showMeterFlow;
+  const [actionShed, setActionShed] = useState<CachedShed | null>(null);
+
+  // A person with both jobs picking a shed doesn't need two whole
+  // shed-grids stacked on top of each other (CLAUDE.md: lean, one screen,
+  // not a scroll of near-duplicates) — one grid, then a small choice of
+  // which job for that shed. Someone with only one job skips straight to
+  // that job's flow, same as before.
+  function chooseShed(shed: CachedShed) {
+    if (bothFlows) setActionShed(shed);
+    else if (showMaintenanceFlow) recordAt(shed.id);
+    else logMeterAt(shed.id);
+  }
 
   return (
     <div className="screen">
@@ -179,48 +192,54 @@ function HomeInner() {
         </div>
       )}
 
-      {showMaintenanceFlow && (
+      {(showMaintenanceFlow || showMeterFlow) && (
         <>
           {sheds.length <= 1 ? (
-            <button className="btn btn-amber btn-block record-cta" onClick={() => recordAt()}>
-              {t('home.recordButton')}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {showMaintenanceFlow && (
+                <button className="btn btn-amber btn-block record-cta" onClick={() => recordAt()}>
+                  {t('home.recordButton')}
+                </button>
+              )}
+              {showMeterFlow && (
+                <button
+                  className={showMaintenanceFlow ? 'btn btn-block record-cta' : 'btn btn-amber btn-block record-cta'}
+                  onClick={() => logMeterAt()}
+                >
+                  {t('home.meterButton')}
+                </button>
+              )}
+            </div>
           ) : (
             <>
               <h2 className="dash-section-title" style={{ marginTop: 0 }}>
-                {t('home.chooseShedTitle')}
+                {bothFlows ? t('home.chooseShedGenericTitle') : showMaintenanceFlow ? t('home.chooseShedTitle') : t('home.chooseShedMeterTitle')}
               </h2>
               <div className="home-shed-grid">
                 {sheds.map((s) => (
-                  <button key={s.id} className="home-shed-card" onClick={() => recordAt(s.id)}>
+                  <button key={s.id} className="home-shed-card" onClick={() => chooseShed(s)}>
                     <span className="shed-badge">{s.code}</span>
                     <span className="home-shed-name">{s.name}</span>
                   </button>
                 ))}
               </div>
+              {actionShed && (
+                <div className="panel" style={{ padding: 12, marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ fontWeight: 600 }}>
+                    {actionShed.code} — {actionShed.name}
+                  </div>
+                  <button className="btn btn-amber btn-block" onClick={() => recordAt(actionShed.id)}>
+                    {t('home.recordButton')}
+                  </button>
+                  <button className="btn btn-block" onClick={() => logMeterAt(actionShed.id)}>
+                    {t('home.meterButton')}
+                  </button>
+                  <button className="btn btn-small" onClick={() => setActionShed(null)}>
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              )}
             </>
-          )}
-        </>
-      )}
-
-      {showMeterFlow && (
-        <>
-          <h2 className="dash-section-title" style={{ marginTop: showMaintenanceFlow ? 24 : 0 }}>
-            {t('home.chooseShedMeterTitle')}
-          </h2>
-          {sheds.length <= 1 ? (
-            <button className="btn btn-amber btn-block record-cta" onClick={() => logMeterAt()}>
-              {t('home.meterButton')}
-            </button>
-          ) : (
-            <div className="home-shed-grid">
-              {sheds.map((s) => (
-                <button key={s.id} className="home-shed-card" onClick={() => logMeterAt(s.id)}>
-                  <span className="shed-badge">{s.code}</span>
-                  <span className="home-shed-name">{s.name}</span>
-                </button>
-              ))}
-            </div>
           )}
         </>
       )}

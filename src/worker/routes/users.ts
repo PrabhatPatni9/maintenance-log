@@ -8,23 +8,21 @@ import type { SessionRecord } from '../lib/env';
 
 /**
  * Owner tier manages every account. A shed-scoped admin can now add
- * operators and utility_operators too — "distribute" a slice of the sheds
- * they were granted to someone doing the recording — but never another
- * admin or the owner tier, and never a user outside their own roster. Every
- * route below trusts nothing from the client about role or shed scope
- * beyond what the caller's own session already proves.
+ * operator-tier accounts too (either job, or both) — "distribute" a slice of
+ * the sheds they were granted to someone doing the recording — but never
+ * another admin or the owner tier, and never a user outside their own
+ * roster. Every route below trusts nothing from the client about role or
+ * shed scope beyond what the caller's own session already proves.
  */
 export const userRoutes = new Hono<AppEnv>();
 userRoutes.use('*', requireAuth, requireAdmin);
 
 /** True for the accounts a shed-scoped admin is allowed to see or touch at
- * all: operators and utility_operators they personally created (both are
- * DB role='operator' — utility_operator is just the is_utility flag on top,
- * so this check already covers both without needing to know which). Everyone
- * else's account — other admins, the owner tier, users someone else added —
- * is invisible to them here, same as CLAUDE.md's "admin has shed-level
- * access" model applied to people, not just sheds. The owner tier has no
- * such restriction. */
+ * all: operator-tier accounts they personally created, whichever job flags
+ * they carry. Everyone else's account — other admins, the owner tier, users
+ * someone else added — is invisible to them here, same as CLAUDE.md's
+ * "admin has shed-level access" model applied to people, not just sheds.
+ * The owner tier has no such restriction. */
 function canManage(session: SessionRecord, target: { role: string; created_by: unknown }): boolean {
   if (session.role === 'super_admin') return true;
   return target.role === 'operator' && target.created_by === session.phone;
@@ -84,13 +82,17 @@ userRoutes.get('/:phone/sheds', async (c) => {
  *
  * `role='super_admin'` is not a legal DB value (see migration 0004) — it is
  * stored as role='admin' plus is_super_admin=1, and mapUser folds that back
- * into the three-way Role everywhere else in the app.
+ * into the three-way Role everywhere else in the app. `isOperator`/
+ * `isUtility` only matter for role='operator' — which job(s) this account
+ * does (migration 0006). At least one must be true.
  */
 userRoutes.post('/', async (c) => {
   const body = await c.req.json<{
     phone: string;
     name: string;
-    role: 'super_admin' | 'admin' | 'utility_operator' | 'operator';
+    role: 'super_admin' | 'admin' | 'operator';
+    isOperator?: boolean;
+    isUtility?: boolean;
     lang: 'en' | 'hi' | 'mr';
     salt: string;
     derivedKey: string;
@@ -102,12 +104,18 @@ userRoutes.post('/', async (c) => {
 
   const session = c.get('session');
 
-  // A shed-scoped admin can only ever create an operator or a
-  // utility_operator — never another admin, and never the owner tier. This
-  // is the actual permission boundary; hiding the role picker in the UI is
-  // a courtesy, not the guard, since a request can always be handwritten.
-  if (session.role !== 'super_admin' && body.role !== 'operator' && body.role !== 'utility_operator') {
+  // A shed-scoped admin can only ever create an operator-tier account —
+  // never another admin, and never the owner tier. This is the actual
+  // permission boundary; hiding the role picker in the UI is a courtesy,
+  // not the guard, since a request can always be handwritten.
+  if (session.role !== 'super_admin' && body.role !== 'operator') {
     return c.json({ error: 'admins may only add operators' }, 403);
+  }
+
+  const isOperator = body.role === 'operator' ? (body.isOperator ?? true) : true;
+  const isUtility = body.role === 'operator' ? Boolean(body.isUtility) : true;
+  if (body.role === 'operator' && !isOperator && !isUtility) {
+    return c.json({ error: 'pick at least one of operator or utility operator' }, 400);
   }
 
   const outsideGrant = await firstShedOutsideGrant(c.env.DB, session, body.shedIds ?? []);
@@ -118,14 +126,14 @@ userRoutes.post('/', async (c) => {
   const passHash = await hashDerivedKey(body.derivedKey);
   const now = Date.now();
   const isSuperAdmin = body.role === 'super_admin';
-  const isUtility = body.role === 'utility_operator';
-  // 'super_admin' and 'utility_operator' are not legal DB values (see
-  // migrations 0004 and 0005) — both are a flag on top of a base role.
-  const dbRole = isSuperAdmin ? 'admin' : isUtility ? 'operator' : body.role;
+  // 'super_admin' is not a legal DB value (see migration 0004) — it is a
+  // flag on top of role='admin'.
+  const dbRole = isSuperAdmin ? 'admin' : body.role;
 
   await c.env.DB.prepare(
-    `INSERT INTO users (phone, name, role, lang, pass_hash, pass_salt, active, created_at, created_by, is_super_admin, is_utility)
-     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)`,
+    `INSERT INTO users
+      (phone, name, role, lang, pass_hash, pass_salt, active, created_at, created_by, is_super_admin, is_operator, is_utility)
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`,
   )
     .bind(
       body.phone,
@@ -137,6 +145,7 @@ userRoutes.post('/', async (c) => {
       now,
       session.phone,
       isSuperAdmin ? 1 : 0,
+      isOperator ? 1 : 0,
       isUtility ? 1 : 0,
     )
     .run();
@@ -145,10 +154,10 @@ userRoutes.post('/', async (c) => {
     await setUserSheds(c.env.DB, body.phone, body.shedIds);
   }
 
-  return c.json(
-    { user: { phone: body.phone, name: body.name, role: body.role, lang: body.lang, active: true, createdAt: now } },
-    201,
-  );
+  const row = await c.env.DB.prepare('SELECT * FROM users WHERE phone = ?')
+    .bind(body.phone)
+    .first<Record<string, unknown>>();
+  return c.json({ user: mapUser(row!) }, 201);
 });
 
 /**
@@ -182,17 +191,51 @@ userRoutes.post('/:phone/reset-password', async (c) => {
 userRoutes.patch('/:phone', async (c) => {
   const phone = c.req.param('phone');
   const session = c.get('session');
-  const body = await c.req.json<{ active?: boolean; name?: string; shedIds?: string[] }>();
+  const body = await c.req.json<{
+    active?: boolean;
+    name?: string;
+    shedIds?: string[];
+    role?: 'super_admin' | 'admin' | 'operator';
+    isOperator?: boolean;
+    isUtility?: boolean;
+  }>();
 
-  const target = await c.env.DB.prepare('SELECT role, created_by FROM users WHERE phone = ?')
+  const target = await c.env.DB.prepare('SELECT role, created_by, is_operator, is_utility FROM users WHERE phone = ?')
     .bind(phone)
-    .first<{ role: string; created_by: unknown }>();
+    .first<{ role: string; created_by: unknown; is_operator: number; is_utility: number }>();
   if (!target) return c.json({ error: 'not found' }, 404);
   if (!canManage(session, target)) return c.json({ error: 'forbidden' }, 403);
 
   if (body.shedIds !== undefined) {
     const outsideGrant = await firstShedOutsideGrant(c.env.DB, session, body.shedIds);
     if (outsideGrant) return c.json({ error: `shed ${outsideGrant} is not one of your own` }, 403);
+  }
+
+  // Tier changes (operator ↔ admin ↔ super_admin) are owner-only — a
+  // shed-scoped admin's canManage() above already limits them to
+  // operator-tier targets, so this only ever fires for a genuine promotion.
+  if (body.role !== undefined) {
+    if (session.role !== 'super_admin') return c.json({ error: 'forbidden' }, 403);
+    const isSuperAdmin = body.role === 'super_admin';
+    const dbRole = isSuperAdmin ? 'admin' : body.role;
+    await c.env.DB.prepare('UPDATE users SET role = ?, is_super_admin = ? WHERE phone = ?')
+      .bind(dbRole, isSuperAdmin ? 1 : 0, phone)
+      .run();
+  }
+
+  // Job flags are the actual "change an operator's role" ask — which of the
+  // two jobs this operator-tier account does. Any admin who can already
+  // manage this account can toggle these, same boundary as resetting their
+  // password. A person needs at least one of the two.
+  if (body.isOperator !== undefined || body.isUtility !== undefined) {
+    const nextIsOperator = body.isOperator !== undefined ? body.isOperator : Boolean(target.is_operator);
+    const nextIsUtility = body.isUtility !== undefined ? body.isUtility : Boolean(target.is_utility);
+    if (!nextIsOperator && !nextIsUtility) {
+      return c.json({ error: 'pick at least one of operator or utility operator' }, 400);
+    }
+    await c.env.DB.prepare('UPDATE users SET is_operator = ?, is_utility = ? WHERE phone = ?')
+      .bind(nextIsOperator ? 1 : 0, nextIsUtility ? 1 : 0, phone)
+      .run();
   }
 
   if (body.active !== undefined) {

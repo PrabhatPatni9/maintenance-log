@@ -108,8 +108,8 @@ export function Meters() {
         {t('admin.meters.hint')}
       </p>
 
-      <form onSubmit={addMeter} className="panel form-row" style={{ padding: 16, marginBottom: 24 }}>
-        <div style={{ minWidth: 140 }}>
+      <form onSubmit={addMeter} className="panel stacked-form">
+        <div>
           <label className="field-label">{t('admin.sheds.title')}</label>
           <select className="input" value={shedId} onChange={(e) => setShedId(e.target.value)}>
             {sheds.map((s) => (
@@ -119,18 +119,20 @@ export function Meters() {
             ))}
           </select>
         </div>
-        <div style={{ width: 110 }}>
-          <label className="field-label">{t('admin.meters.codeLabel')}</label>
-          <input className="input" value={code} onChange={(e) => setCode(e.target.value)} required maxLength={10} />
+        <div className="field-pair">
+          <div>
+            <label className="field-label">{t('admin.meters.codeLabel')}</label>
+            <input className="input" value={code} onChange={(e) => setCode(e.target.value)} required maxLength={10} />
+          </div>
+          <div>
+            <label className="field-label">{t('admin.meters.nameLabel')}</label>
+            <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
         </div>
-        <div style={{ flex: 1, minWidth: 160 }}>
-          <label className="field-label">{t('admin.meters.nameLabel')}</label>
-          <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
-        <button className="btn btn-primary" type="submit" disabled={busy}>
+        {addError && <p style={{ color: 'var(--fault)', margin: 0 }}>{addError}</p>}
+        <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
           {t('admin.meters.addMeter')}
         </button>
-        {addError && <p style={{ color: 'var(--fault)', width: '100%', margin: 0 }}>{addError}</p>}
       </form>
 
       {metersByShed.map(({ shed, meters: shedMeters }) => (

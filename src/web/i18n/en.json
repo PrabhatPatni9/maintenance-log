@@ -51,6 +51,7 @@
     "myLogsTitle": "My logs",
     "viewAll": "View all",
     "chooseShedTitle": "Choose a shed to record",
+    "chooseShedGenericTitle": "Choose a shed",
     "searchPlaceholder": "Search machine number or shed",
     "searchNoMatch": "No machine or shed matches \"{{query}}\"",
     "shedStatsMachines": "Machines you've worked on in {{code}}: {{count}}",
@@ -160,7 +161,10 @@
       "saveError": "Could not save. Try again.",
       "empty": "No operators added yet. Add the first one above.",
       "resetPassword": "Reset password",
-      "roleUtilityOperator": "Utility operator (electrician)"
+      "roleUtilityOperator": "Utility operator (electrician)",
+      "jobsLabel": "Jobs (pick at least one)",
+      "pickAtLeastOneJob": "Pick at least one job.",
+      "editRole": "Edit role"
     },
     "taxonomy": {
       "title": "Taxonomy",
@@ -232,6 +236,31 @@
       "machinesOnThis": "machines on this meter",
       "assignMachines": "Assign machines",
       "onAnotherMeter": "on {{code}}"
+    },
+    "webhooksTab": "Integrations",
+    "webhooks": {
+      "title": "Integrations",
+      "hint": "Push every approved maintenance log and every meter reading to a URL you supply — a Google Apps Script Web App is the usual fit for landing data in a Google Sheet. Owner tier only, since a webhook URL can send shed data anywhere.",
+      "scopeLabel": "Scope",
+      "scopeGlobal": "Every shed",
+      "scopeShedOption": "One shed",
+      "scopeMachineOption": "One machine",
+      "scopeShed": "Shed: {{name}}",
+      "scopeMachine": "Machine: {{name}}",
+      "urlLabel": "Webhook URL",
+      "addWebhook": "Add webhook",
+      "saveError": "Could not save. Try again.",
+      "secretTitle": "Signing secret",
+      "secretHint": "Copy this now — it will not be shown again. Every delivery is signed with it (HMAC-SHA256, header X-Webhook-Signature) so your script can verify it really came from here.",
+      "secretDismiss": "I've copied it",
+      "neverFired": "Never fired yet.",
+      "lastOk": "Last delivery {{when}} · HTTP {{status}}",
+      "lastError": "Last delivery {{when}} · failed: {{error}}",
+      "test": "Send test",
+      "testOk": "Test delivered · HTTP {{status}}",
+      "testFailed": "Test failed: {{error}}",
+      "deleteConfirm": "Remove the webhook to \"{{url}}\"? It will stop receiving data immediately.",
+      "empty": "No webhooks configured yet."
     }
   },
   "settings": {
