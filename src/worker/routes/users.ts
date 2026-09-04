@@ -8,20 +8,23 @@ import type { SessionRecord } from '../lib/env';
 
 /**
  * Owner tier manages every account. A shed-scoped admin can now add
- * operators too — "distribute" a slice of the sheds they were granted to
- * someone doing the recording — but never another admin or the owner tier,
- * and never an operator outside their own roster. Every route below trusts
- * nothing from the client about role or shed scope beyond what the caller's
- * own session already proves.
+ * operators and utility_operators too — "distribute" a slice of the sheds
+ * they were granted to someone doing the recording — but never another
+ * admin or the owner tier, and never a user outside their own roster. Every
+ * route below trusts nothing from the client about role or shed scope
+ * beyond what the caller's own session already proves.
  */
 export const userRoutes = new Hono<AppEnv>();
 userRoutes.use('*', requireAuth, requireAdmin);
 
 /** True for the accounts a shed-scoped admin is allowed to see or touch at
- * all: operators they personally created. Everyone else's account — other
- * admins, the owner tier, operators someone else added — is invisible to
- * them here, same as CLAUDE.md's "admin has shed-level access" model applied
- * to people, not just sheds. The owner tier has no such restriction. */
+ * all: operators and utility_operators they personally created (both are
+ * DB role='operator' — utility_operator is just the is_utility flag on top,
+ * so this check already covers both without needing to know which). Everyone
+ * else's account — other admins, the owner tier, users someone else added —
+ * is invisible to them here, same as CLAUDE.md's "admin has shed-level
+ * access" model applied to people, not just sheds. The owner tier has no
+ * such restriction. */
 function canManage(session: SessionRecord, target: { role: string; created_by: unknown }): boolean {
   if (session.role === 'super_admin') return true;
   return target.role === 'operator' && target.created_by === session.phone;
@@ -87,7 +90,7 @@ userRoutes.post('/', async (c) => {
   const body = await c.req.json<{
     phone: string;
     name: string;
-    role: 'super_admin' | 'admin' | 'operator';
+    role: 'super_admin' | 'admin' | 'utility_operator' | 'operator';
     lang: 'en' | 'hi' | 'mr';
     salt: string;
     derivedKey: string;
@@ -99,11 +102,11 @@ userRoutes.post('/', async (c) => {
 
   const session = c.get('session');
 
-  // A shed-scoped admin can only ever create an operator — never another
-  // admin, and never the owner tier. This is the actual permission
-  // boundary; hiding the role picker in the UI is a courtesy, not the
-  // guard, since a request can always be handwritten.
-  if (session.role !== 'super_admin' && body.role !== 'operator') {
+  // A shed-scoped admin can only ever create an operator or a
+  // utility_operator — never another admin, and never the owner tier. This
+  // is the actual permission boundary; hiding the role picker in the UI is
+  // a courtesy, not the guard, since a request can always be handwritten.
+  if (session.role !== 'super_admin' && body.role !== 'operator' && body.role !== 'utility_operator') {
     return c.json({ error: 'admins may only add operators' }, 403);
   }
 
@@ -115,16 +118,30 @@ userRoutes.post('/', async (c) => {
   const passHash = await hashDerivedKey(body.derivedKey);
   const now = Date.now();
   const isSuperAdmin = body.role === 'super_admin';
-  const dbRole = isSuperAdmin ? 'admin' : body.role;
+  const isUtility = body.role === 'utility_operator';
+  // 'super_admin' and 'utility_operator' are not legal DB values (see
+  // migrations 0004 and 0005) — both are a flag on top of a base role.
+  const dbRole = isSuperAdmin ? 'admin' : isUtility ? 'operator' : body.role;
 
   await c.env.DB.prepare(
-    `INSERT INTO users (phone, name, role, lang, pass_hash, pass_salt, active, created_at, created_by, is_super_admin)
-     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+    `INSERT INTO users (phone, name, role, lang, pass_hash, pass_salt, active, created_at, created_by, is_super_admin, is_utility)
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)`,
   )
-    .bind(body.phone, body.name, dbRole, body.lang, passHash, body.salt, now, session.phone, isSuperAdmin ? 1 : 0)
+    .bind(
+      body.phone,
+      body.name,
+      dbRole,
+      body.lang,
+      passHash,
+      body.salt,
+      now,
+      session.phone,
+      isSuperAdmin ? 1 : 0,
+      isUtility ? 1 : 0,
+    )
     .run();
 
-  if ((body.role === 'operator' || body.role === 'admin') && body.shedIds?.length) {
+  if (body.role !== 'super_admin' && body.shedIds?.length) {
     await setUserSheds(c.env.DB, body.phone, body.shedIds);
   }
 

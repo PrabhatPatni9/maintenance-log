@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLang, useT } from '../../i18n';
 import { useAuth } from '../../lib/auth-context';
-import { RequireSuperAdmin } from '../../lib/guards';
+import { RequireAdmin } from '../../lib/guards';
 import { api } from '../../lib/api';
+import { SimpleBarChart } from '../../components/SimpleBarChart';
+import type { Machine, MeterConsumptionRow } from '@shared/types';
 
 interface DashboardData {
   summary: {
@@ -80,9 +82,13 @@ function DashboardInner() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [drilldown, setDrilldown] = useState<{ machineNo: string; shedCode: string; id: string } | null>(null);
   const [history, setHistory] = useState<MachineHistory | null>(null);
+  const [consumption, setConsumption] = useState<MeterConsumptionRow[] | null>(null);
+  const [machines, setMachines] = useState<Machine[]>([]);
 
   useEffect(() => {
     void api.get<DashboardData>('/admin/dashboard').then(setData);
+    void api.get<{ rows: MeterConsumptionRow[] }>('/meter-readings/consumption?days=30').then((r) => setConsumption(r.rows));
+    void api.get<{ machines: Machine[] }>('/machines').then((r) => setMachines(r.machines));
   }, []);
 
   useEffect(() => {
@@ -92,6 +98,44 @@ function DashboardInner() {
     }
     void api.get<MachineHistory>(`/admin/dashboard/machines/${drilldown.id}`).then(setHistory);
   }, [drilldown]);
+
+  // Daily total across every meter in scope, for the chart — a bar per day
+  // regardless of which shed or meter it came from.
+  const dailyTotals = useMemo(() => {
+    if (!consumption) return [];
+    const byDate = new Map<string, number>();
+    for (const row of consumption) {
+      if (row.kwhConsumed === null) continue;
+      byDate.set(row.readingDate, (byDate.get(row.readingDate) ?? 0) + row.kwhConsumed);
+    }
+    return [...byDate.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, value]) => ({ label: date.slice(5), value })); // MM-DD
+  }, [consumption]);
+
+  // Each meter's most recent day with a consumption figure — what "what's
+  // going on today" actually means once a meter has more than one reading.
+  const latestPerMeter = useMemo(() => {
+    if (!consumption) return new Map<string, MeterConsumptionRow>();
+    const out = new Map<string, MeterConsumptionRow>();
+    for (const row of consumption) {
+      const cur = out.get(row.meterId);
+      if (!cur || row.readingDate > cur.readingDate) out.set(row.meterId, row);
+    }
+    return out;
+  }, [consumption]);
+
+  // Machine → its meter's latest per-machine kWh split. Only machines
+  // actually wired to a meter show up here.
+  const machineRows = useMemo(() => {
+    return machines
+      .filter((m) => m.meterId)
+      .map((m) => {
+        const row = latestPerMeter.get(m.meterId!);
+        return { machine: m, row };
+      })
+      .filter((r) => r.row);
+  }, [machines, latestPerMeter]);
 
   if (!data) return <p className="meta">{t('common.loading')}</p>;
   const { summary } = data;
@@ -203,6 +247,43 @@ function DashboardInner() {
           </li>
         ))}
       </ul>
+
+      <h2 className="dash-section-title">{t('admin.dashboard.electricalTitle')}</h2>
+      {consumption !== null && dailyTotals.length === 0 && <p className="meta">{t('admin.dashboard.noData')}</p>}
+      {dailyTotals.length > 0 && (
+        <div className="panel" style={{ padding: '16px 12px 4px', marginBottom: 20 }}>
+          <p className="meta" style={{ marginBottom: 8 }}>
+            {t('admin.dashboard.dailyKwhTitle')}
+          </p>
+          <SimpleBarChart data={dailyTotals} valueSuffix=" kWh" />
+        </div>
+      )}
+
+      {machineRows.length > 0 && (
+        <>
+          <p className="meta" style={{ marginBottom: 8 }}>
+            {t('admin.dashboard.perMachineTitle')}
+          </p>
+          <ul className="stack-list">
+            {machineRows.map(({ machine, row }) => (
+              <li key={machine.id} className="panel dash-row">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600 }}>
+                    {machine.machineNo} · {row!.shedCode}
+                  </div>
+                  <div className="meta">
+                    {row!.meterCode} · {row!.readingDate}
+                    {row!.pfReading !== null && ` · PF ${row!.pfReading}`}
+                  </div>
+                </div>
+                <div style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  {row!.kwhPerMachine !== null ? `${row!.kwhPerMachine.toFixed(1)} kWh` : '—'}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
@@ -210,8 +291,8 @@ function DashboardInner() {
 export function Dashboard() {
   const { user } = useAuth();
   return (
-    <RequireSuperAdmin>
+    <RequireAdmin>
       {user && <DashboardInner />}
-    </RequireSuperAdmin>
+    </RequireAdmin>
   );
 }

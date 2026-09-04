@@ -7,6 +7,9 @@ import type {
   LogSegmentRecord,
   LogStatus,
   Machine,
+  Meter,
+  MeterReading,
+  MeterReadingEditRecord,
   Role,
   SegmentSource,
   Shed,
@@ -37,22 +40,64 @@ export function mapMachine(r: Record<string, unknown>): Machine {
     loomType: (r.loom_type as string) ?? null,
     shedviewId: (r.shedview_id as string) ?? null,
     installedOn: (r.installed_on as string) ?? null,
+    meterId: (r.meter_id as string) ?? null,
     active: Boolean(r.active),
     createdAt: r.created_at as number,
   };
 }
 
+export function mapMeter(r: Record<string, unknown>): Meter {
+  return {
+    id: r.id as string,
+    shedId: r.shed_id as string,
+    code: r.code as string,
+    name: (r.name as string) ?? null,
+    active: Boolean(r.active),
+    createdAt: r.created_at as number,
+  };
+}
+
+export function mapMeterReading(r: Record<string, unknown>): MeterReading {
+  return {
+    id: r.id as string,
+    meterId: r.meter_id as string,
+    readingDate: r.reading_date as string,
+    kwhReading: r.kwh_reading as number,
+    pfReading: (r.pf_reading as number) ?? null,
+    note: (r.note as string) ?? null,
+    recordedBy: r.recorded_by as string,
+    recordedAt: r.recorded_at as number,
+  };
+}
+
+export function mapMeterReadingEdit(r: Record<string, unknown>): MeterReadingEditRecord {
+  return {
+    id: r.id as string,
+    readingId: r.reading_id as string,
+    adminPhone: r.admin_phone as string,
+    field: r.field as 'kwh_reading' | 'pf_reading',
+    valueBefore: (r.value_before as string) ?? null,
+    valueAfter: (r.value_after as string) ?? null,
+    reason: r.reason as string,
+    editedAt: r.edited_at as number,
+  };
+}
+
 /**
- * `role` is 'admin' | 'operator' at the DB level — `super_admin` could not be
- * added as a third CHECK value without recreating the users table, which D1
- * refuses while other tables hold a foreign key into it (see migration
- * 0004's comment). The owner tier is `role='admin'` plus `is_super_admin=1`
- * instead, and this mapper is the one place that folds the two DB columns
- * back into the single three-way Role the rest of the app deals in.
+ * `role` is 'admin' | 'operator' at the DB level — `super_admin` and
+ * `utility_operator` could not be added as CHECK values without recreating
+ * the users table, which D1 refuses while other tables hold a foreign key
+ * into it (see migration 0004's comment). Both extra tiers are flags on top
+ * instead: `role='admin'` + `is_super_admin=1` is the owner tier,
+ * `role='operator'` + `is_utility=1` is the electrician tier. This mapper is
+ * the one place that folds the three DB columns back into the app's
+ * four-way Role.
  */
 export function mapUser(r: Record<string, unknown>): User {
   const dbRole = r.role as 'admin' | 'operator';
-  const role: Role = dbRole === 'admin' && Boolean(r.is_super_admin) ? 'super_admin' : dbRole;
+  let role: Role = dbRole;
+  if (dbRole === 'admin' && Boolean(r.is_super_admin)) role = 'super_admin';
+  else if (dbRole === 'operator' && Boolean(r.is_utility)) role = 'utility_operator';
   return {
     phone: r.phone as string,
     name: r.name as string,

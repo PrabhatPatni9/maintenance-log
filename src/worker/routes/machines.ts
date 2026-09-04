@@ -139,9 +139,14 @@ machineRoutes.post('/bulk', requireSuperAdmin, async (c) => {
 });
 
 /**
- * A shed-scoped admin may only flip `active`. Renaming a machine number or
- * moving it to a different shed — the actual fix for "56 machines added to
- * the wrong shed" — is owner-tier only, same reasoning as POST/bulk above.
+ * A shed-scoped admin may only flip `active` and assign/unassign `meterId`.
+ * Renaming a machine number or moving it to a different shed — the actual
+ * fix for "56 machines added to the wrong shed" — is owner-tier only, same
+ * reasoning as POST/bulk above. Meter assignment is deliberately not in
+ * that lockdown: it never changes how many machines exist or which shed
+ * they belong to, only which of that shed's own meters a machine sits
+ * behind — the necessary counterpart of admins being able to add meters at
+ * all (otherwise a meter they create has no way to ever get a machine on it).
  */
 machineRoutes.patch('/:id', requireAdmin, async (c) => {
   const id = c.req.param('id');
@@ -154,6 +159,7 @@ machineRoutes.patch('/:id', requireAdmin, async (c) => {
     loomType: string;
     shedviewId: string;
     installedOn: string;
+    meterId: string | null;
     active: boolean;
   }>>();
 
@@ -179,6 +185,15 @@ machineRoutes.patch('/:id', requireAdmin, async (c) => {
   if (body.shedId !== undefined && !(await canAccessShed(c.env.DB, session, body.shedId))) {
     return c.json({ error: 'forbidden' }, 403);
   }
+  if (body.meterId) {
+    // A machine can only ever be assigned to a meter in its own shed.
+    const meter = await c.env.DB.prepare('SELECT shed_id FROM meters WHERE id = ?')
+      .bind(body.meterId)
+      .first<{ shed_id: string }>();
+    if (!meter || meter.shed_id !== existing.shed_id) {
+      return c.json({ error: 'meter must belong to the same shed' }, 400);
+    }
+  }
 
   const { setClause, binds } = buildSetClause({
     machine_no: body.machineNo,
@@ -188,6 +203,7 @@ machineRoutes.patch('/:id', requireAdmin, async (c) => {
     loom_type: body.loomType,
     shedview_id: body.shedviewId,
     installed_on: body.installedOn,
+    meter_id: body.meterId === undefined ? undefined : body.meterId,
     active: body.active === undefined ? undefined : body.active ? 1 : 0,
   });
 

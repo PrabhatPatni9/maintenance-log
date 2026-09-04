@@ -8,6 +8,8 @@ import { LanguagePicker } from './routes/LanguagePicker';
 import { Login } from './routes/Login';
 import { MachinePicker } from './routes/MachinePicker';
 import { MachineHistory } from './routes/MachineHistory';
+import { MeterPicker } from './routes/MeterPicker';
+import { MeterEntry } from './routes/MeterEntry';
 import { Record } from './routes/Record';
 import { LogDetail } from './routes/LogDetail';
 import { History as OperatorHistory } from './routes/History';
@@ -19,6 +21,7 @@ import { Settings } from './routes/Settings';
 const AdminShell = lazyRouteComponent(() => import('./routes/admin/AdminShell'), 'AdminShell');
 const Sheds = lazyRouteComponent(() => import('./routes/admin/Sheds'), 'Sheds');
 const Machines = lazyRouteComponent(() => import('./routes/admin/Machines'), 'Machines');
+const Meters = lazyRouteComponent(() => import('./routes/admin/Meters'), 'Meters');
 const Users = lazyRouteComponent(() => import('./routes/admin/Users'), 'Users');
 const Taxonomy = lazyRouteComponent(() => import('./routes/admin/Taxonomy'), 'Taxonomy');
 const History = lazyRouteComponent(() => import('./routes/admin/History'), 'History');
@@ -29,7 +32,7 @@ const Dashboard = lazyRouteComponent(() => import('./routes/admin/Dashboard'), '
 // screen's Stop button, a machine's persistent "Record a new log" footer —
 // and stacking a second bar under those would just fight them for the same
 // sliver of a short phone.
-const BOTTOM_NAV_PATHS = new Set(['/', '/history', '/settings', '/machine']);
+const BOTTOM_NAV_PATHS = new Set(['/', '/history', '/settings', '/machine', '/meter']);
 
 function RootLayout() {
   const { user } = useAuth();
@@ -59,6 +62,8 @@ const languageRoute = createRoute({ getParentRoute: () => rootRoute, path: '/lan
 const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: '/login', component: Login });
 const machineRoute = createRoute({ getParentRoute: () => rootRoute, path: '/machine', component: MachinePicker });
 const machineHistoryRoute = createRoute({ getParentRoute: () => rootRoute, path: '/machine/$machineId', component: MachineHistory });
+const meterRoute = createRoute({ getParentRoute: () => rootRoute, path: '/meter', component: MeterPicker });
+const meterEntryRoute = createRoute({ getParentRoute: () => rootRoute, path: '/meter/$meterId', component: MeterEntry });
 const recordRoute = createRoute({ getParentRoute: () => rootRoute, path: '/record/$machineId', component: Record });
 const logDetailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/logs/$logId', component: LogDetail });
 const historyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/history', component: OperatorHistory });
@@ -74,6 +79,7 @@ const adminIndexRoute = createRoute({
 });
 const adminShedsRoute = createRoute({ getParentRoute: () => adminRoute, path: '/sheds', component: Sheds });
 const adminMachinesRoute = createRoute({ getParentRoute: () => adminRoute, path: '/machines', component: Machines });
+const adminMetersRoute = createRoute({ getParentRoute: () => adminRoute, path: '/meters', component: Meters });
 const adminUsersRoute = createRoute({ getParentRoute: () => adminRoute, path: '/users', component: Users });
 const adminTaxonomyRoute = createRoute({ getParentRoute: () => adminRoute, path: '/taxonomy', component: Taxonomy });
 const adminHistoryRoute = createRoute({ getParentRoute: () => adminRoute, path: '/history', component: History });
@@ -85,6 +91,8 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   machineRoute,
   machineHistoryRoute,
+  meterRoute,
+  meterEntryRoute,
   recordRoute,
   logDetailRoute,
   historyRoute,
@@ -93,6 +101,7 @@ const routeTree = rootRoute.addChildren([
     adminIndexRoute,
     adminShedsRoute,
     adminMachinesRoute,
+    adminMetersRoute,
     adminUsersRoute,
     adminTaxonomyRoute,
     adminHistoryRoute,

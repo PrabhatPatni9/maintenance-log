@@ -57,7 +57,9 @@
     "shedStatsLogs": "{{count}} logs filed by you in this shed",
     "searchLogsPlaceholder": "Search today's logs (machine, shed, part, note)",
     "noLogsMatch": "No log matches \"{{query}}\"",
-    "viewFullHistory": "View full history"
+    "viewFullHistory": "View full history",
+    "chooseShedMeterTitle": "Choose a shed to log a meter reading",
+    "meterButton": "Log a meter reading"
   },
   "machine": {
     "pickShedTitle": "Choose a shed",
@@ -157,7 +159,8 @@
       "hintAdmin": "Add operators and share access to your own sheds with them. You can only manage operators you added yourself.",
       "saveError": "Could not save. Try again.",
       "empty": "No operators added yet. Add the first one above.",
-      "resetPassword": "Reset password"
+      "resetPassword": "Reset password",
+      "roleUtilityOperator": "Utility operator (electrician)"
     },
     "taxonomy": {
       "title": "Taxonomy",
@@ -213,7 +216,22 @@
       "noData": "Nothing logged yet.",
       "viewMachine": "What has been done",
       "machineHistoryTitle": "Actions and parts logged on this machine",
-      "never": "never"
+      "never": "never",
+      "dailyKwhTitle": "Daily kWh (last 30 days)",
+      "electricalTitle": "Electrical",
+      "perMachineTitle": "Today's per-machine consumption"
+    },
+    "metersTab": "Meters",
+    "meters": {
+      "title": "Meters",
+      "hint": "Add a meter for each shed and assign machines to it. A meter can be shared by several machines.",
+      "addMeter": "Add meter",
+      "codeLabel": "Meter code",
+      "nameLabel": "Name",
+      "deleteConfirm": "Permanently delete meter \"{{code}}\" and every reading recorded on it? This cannot be undone.",
+      "machinesOnThis": "machines on this meter",
+      "assignMachines": "Assign machines",
+      "onAnotherMeter": "on {{code}}"
     }
   },
   "settings": {
@@ -263,5 +281,18 @@
     "title": "History",
     "empty": "No logs recorded yet.",
     "loadMore": "Load earlier days"
+  },
+  "meters": {
+    "pickerTitle": "Choose a meter",
+    "noMeters": "No meters yet in this shed.",
+    "notFound": "Meter not found.",
+    "kwhLabel": "kWh reading (as shown on the meter)",
+    "pfLabel": "PF (power factor, optional)",
+    "noteLabel": "Note (optional)",
+    "kwhRequired": "Enter the kWh reading.",
+    "saveButton": "Save reading",
+    "saveError": "Could not save. Try again.",
+    "savedTitle": "Saved",
+    "recentTitle": "Recent readings"
   }
 }

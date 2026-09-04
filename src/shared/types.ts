@@ -6,15 +6,19 @@
 export type Lang = 'en' | 'hi' | 'mr';
 
 /**
- * Three tiers, not two. `operator` records logs. `admin` is the shed-level
- * supervisor: manages machines within sheds they were granted, same
- * shed-scoping model as an operator (via user_sheds), can soft-delete a
- * bogus log from view. `super_admin` is the owner tier: creates every
- * account (including other admins), creates/removes sheds, sees every shed
- * with no scoping, and is the only role that can permanently purge a log or
- * restore one an admin soft-deleted.
+ * Four tiers. `operator` records maintenance logs. `utility_operator` is the
+ * electrician's tier: shed-scoped the same way as `operator` (same
+ * `user_sheds` grant), but logs daily meter readings (kWh/PF) instead of
+ * maintenance notes — a separate job, not a variant of the operator one.
+ * `admin` is the shed-level supervisor: manages meters and taxonomy within
+ * sheds they were granted, can act as either operator or utility_operator
+ * themselves when one is absent, sees history and the dashboard for their
+ * own sheds. `super_admin` is the owner tier: creates every account
+ * (including other admins), creates/removes sheds and machines, sees every
+ * shed with no scoping, and is the only role that can permanently purge a
+ * log or restore one an admin soft-deleted.
  */
-export type Role = 'super_admin' | 'admin' | 'operator';
+export type Role = 'super_admin' | 'admin' | 'utility_operator' | 'operator';
 
 export type LogStatus =
   | 'pending_transcription'
@@ -45,8 +49,64 @@ export interface Machine {
   loomType: string | null;
   shedviewId: string | null;
   installedOn: string | null;
+  meterId: string | null;
   active: boolean;
   createdAt: number;
+}
+
+/** One electrical meter, belonging to one shed. A machine is wired to at
+ * most one meter (see Machine.meterId) — the meter is shared across
+ * however many machines sit on that circuit. */
+export interface Meter {
+  id: string;
+  shedId: string;
+  code: string;
+  name: string | null;
+  active: boolean;
+  createdAt: number;
+}
+
+/** One day's reading for one meter, as read off the physical meter — always
+ * cumulative kWh, never a delta. Daily consumption is derived, not stored;
+ * see MeterConsumptionRow. */
+export interface MeterReading {
+  id: string;
+  meterId: string;
+  readingDate: string; // 'YYYY-MM-DD'
+  kwhReading: number;
+  pfReading: number | null;
+  note: string | null;
+  recordedBy: string;
+  recordedAt: number;
+}
+
+export interface MeterReadingEditRecord {
+  id: string;
+  readingId: string;
+  adminPhone: string;
+  field: 'kwh_reading' | 'pf_reading';
+  valueBefore: string | null;
+  valueAfter: string | null;
+  reason: string;
+  editedAt: number;
+}
+
+/** One meter, one day, with consumption already derived (today's kWh minus
+ * the most recent earlier reading) — what the dashboard graph and the
+ * per-machine split both read from. `machineCount` is how many machines
+ * share this meter, so the UI can show the equal-split per-machine number
+ * without a second round trip. */
+export interface MeterConsumptionRow {
+  meterId: string;
+  meterCode: string;
+  shedId: string;
+  shedCode: string;
+  readingDate: string;
+  kwhReading: number;
+  pfReading: number | null;
+  kwhConsumed: number | null; // null for a meter's first-ever reading — nothing to subtract from
+  machineCount: number;
+  kwhPerMachine: number | null;
 }
 
 export interface User {
