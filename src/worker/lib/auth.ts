@@ -3,6 +3,7 @@ import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import type { Context } from 'hono';
 import type { AppEnv, Env, SessionRecord } from './env';
 import { sha256Hex, hmacSha256Hex } from '@shared/crypto';
+import { mapUser } from './mappers';
 
 export type { SessionRecord };
 
@@ -113,5 +114,34 @@ export async function resolveSession(
 
   const raw = await c.env.SESSIONS.get(`session:${sid}`);
   if (!raw) return null; // revoked, or expired out of KV
-  return JSON.parse(raw) as SessionRecord;
+  const session = JSON.parse(raw) as SessionRecord;
+
+  // Self-heal a session cached before `isOperator`/`isUtility` existed
+  // (migration 0006). Sessions last 90 days and nothing else ever rewrites
+  // one wholesale, so without this every already-logged-in account reads
+  // both flags as `undefined` the moment this shipped — falsy, which hides
+  // every flow on Home (CLAUDE.md's session design already accepts that a
+  // role change takes effect on next login; a field that never existed
+  // before is a different problem and shouldn't need a logout to fix).
+  // Re-derives from the DB once and rewrites the cache, so this only ever
+  // costs one extra read per stale session, not per request.
+  if (typeof session.isOperator !== 'boolean' || typeof session.isUtility !== 'boolean') {
+    const row = await c.env.DB.prepare('SELECT * FROM users WHERE phone = ? AND active = 1')
+      .bind(session.phone)
+      .first<Record<string, unknown>>();
+    if (!row) return null;
+    const user = mapUser(row);
+    const healed: SessionRecord = {
+      phone: user.phone,
+      name: user.name,
+      role: user.role,
+      isOperator: user.isOperator,
+      isUtility: user.isUtility,
+      lang: user.lang,
+    };
+    await c.env.SESSIONS.put(`session:${sid}`, JSON.stringify(healed), { expirationTtl: SESSION_SECONDS });
+    return healed;
+  }
+
+  return session;
 }
