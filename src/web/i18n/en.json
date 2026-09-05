@@ -97,8 +97,10 @@
     "dateLabel": "Date",
     "confirmTitle": "Submit this log?",
     "confirmBody": "You won't be able to change it after this. Check the transcript and pills once more.",
+    "confirmBodyEmpty": "This log has no description — nothing was recognised while you spoke. Type what happened below, or approve as-is if you really have nothing to add.",
     "confirmYes": "Yes, approve",
-    "confirmNo": "Go back"
+    "confirmNo": "Go back",
+    "emptyTranscriptWarning": "We couldn't make out any words while recording. The audio is still saved, but please type what you did below so this log isn't blank."
   },
   "logDetail": {
     "title": "Log detail",

@@ -218,6 +218,22 @@ function RecordInner() {
       </p>
 
       <h2 className="field-label">{t('segment.transcriptLabel')}</h2>
+      {/* Web Speech producing nothing (patchy network reaching Google's
+          cloud STT, or a device where speech input isn't configured) looks
+          identical to an operator who simply hasn't typed anything yet — an
+          empty box with the same generic placeholder either way. Nothing
+          server-side ever backfills this transcript once the log is
+          approved (finalizeAndQueue always sends approved:true, so the log
+          never reaches pending_transcription — a real, separate gap), so
+          silence here would mean an operator who trusted the voice capture
+          walks away with a genuinely blank log. Spelling it out is the fix
+          that actually matters: they need to know to type it themselves,
+          right now. */}
+      {!transcript.trim() && (
+        <p className="meta" style={{ color: 'var(--fault)', marginBottom: 8 }}>
+          {t('review.emptyTranscriptWarning')}
+        </p>
+      )}
       <textarea
         className="input"
         style={{ minHeight: 120, padding: 12, marginBottom: 20, lineHeight: 1.5 }}
@@ -252,7 +268,9 @@ function RecordInner() {
         <div className="modal-backdrop" onClick={() => setConfirmingApprove(false)}>
           <div className="panel modal-card" onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginBottom: 8 }}>{t('review.confirmTitle')}</h2>
-            <p style={{ marginBottom: 20 }}>{t('review.confirmBody')}</p>
+            <p style={{ marginBottom: 20 }}>
+              {transcript.trim() ? t('review.confirmBody') : t('review.confirmBodyEmpty')}
+            </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn btn-block" onClick={() => setConfirmingApprove(false)}>
                 {t('review.confirmNo')}
